@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>熱血江戶一番街 - 8-Bit 復古電商原型</title>
-  <!-- Tailwind CSS -->
+  <title>熱血時代劇 - 8-Bit 江戶一番街 (FC 1991 復刻電商版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Pixel Fonts (DotGothic16 支援漢字與日文像素，Press Start 2P 支援經典英數) -->
+  <!-- Google Pixel Fonts (DotGothic16 支援漢字與日文假名，Press Start 2P 支援經典 FC 英數) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
-  
+
   <style>
     * {
       box-sizing: border-box;
@@ -23,13 +22,13 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #0b0b12;
+      background-color: #0c0814;
       font-family: 'DotGothic16', monospace;
     }
     .font-nes {
       font-family: 'Press Start 2P', monospace;
     }
-    /* 核心像素縮放技術：讓低解析度 3D 畫布呈現真 8-bit 顆粒感 */
+    /* 核心 8-bit 像素畫布縮放：保持純粹 FC 顆粒感 */
     #game-canvas {
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
@@ -40,64 +39,50 @@
       object-fit: cover;
       display: block;
     }
-    /* 紅白機 NES 風格經典邊框 */
-    .nes-box {
-      background-color: #000;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0px #000;
+    /* 經典熱血時代劇 FC 黑色白框 UI */
+    .fc-box {
+      background-color: #000000;
+      border: 4px solid #ffffff;
+      box-shadow: 4px 4px 0px #000000;
       position: relative;
     }
-    .nes-box::after {
+    .fc-box::before {
       content: '';
       position: absolute;
       top: -6px; left: -6px; right: -6px; bottom: -6px;
-      border: 2px solid #000;
+      border: 2px solid #000000;
       pointer-events: none;
     }
-    .nes-btn {
-      background-color: #2b2b36;
-      border: 3px solid #fff;
-      color: #fff;
+    .fc-btn {
+      background-color: #2b233a;
+      border: 3px solid #ffffff;
+      color: #ffffff;
       transition: all 0.05s ease;
       cursor: pointer;
     }
-    .nes-btn:hover {
-      background-color: #d97706;
+    .fc-btn:hover {
+      background-color: #b45309;
       border-color: #fef08a;
     }
-    .nes-btn:active {
+    .fc-btn:active {
       transform: translate(2px, 2px);
     }
-    /* 復古 CRT 掃描線效果 (微弱可切換) */
-    .crt-overlay {
+    /* 復古 CRT 掃描線光柵 */
+    .crt-scanlines {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
       background-size: 100% 4px;
       pointer-events: none;
       z-index: 20;
     }
-    /* 閃爍動畫 */
     @keyframes blink {
       0%, 49% { opacity: 1; }
       50%, 100% { opacity: 0; }
     }
-    .blink {
-      animation: blink 0.8s infinite;
-    }
-    /* 自訂捲軸 */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #111;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #fff;
-    }
+    .blink { animation: blink 0.7s infinite; }
   </style>
 
-  <!-- Three.js ES Module Map -->
   <script type="importmap">
     {
       "imports": {
@@ -111,97 +96,124 @@
   <!-- 3D 渲染畫布容器 -->
   <div id="canvas-container" class="relative w-full h-full overflow-hidden">
     <canvas id="game-canvas"></canvas>
-    <div class="crt-overlay"></div>
+    <div class="crt-scanlines"></div>
   </div>
 
-  <!-- HUD 頂部狀態列 (任天堂風格 HP / 金幣 / 購物車) -->
-  <div class="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none z-30">
-    <!-- 玩家資訊 -->
-    <div class="nes-box p-3 bg-black/90 pointer-events-auto flex flex-col gap-1.5 min-w-[220px]">
-      <div class="flex items-center justify-between text-yellow-400 font-bold text-sm tracking-widest">
-        <span>【熱血浪人】國夫</span>
-        <span class="text-xs bg-red-700 px-1 text-white">LV.01</span>
+  <!-- HUD 頂部狀態列（完全還原 FC 熱血時代劇介面） -->
+  <div class="absolute top-3 left-3 right-3 flex justify-between items-start pointer-events-none z-30 text-xs">
+    <!-- 主角【國政】體力與氣魄 -->
+    <div class="fc-box p-3 bg-black/95 pointer-events-auto flex flex-col gap-1 min-w-[240px]">
+      <div class="flex items-center justify-between text-yellow-400 font-bold tracking-wider">
+        <span>【駿河】くにまさ (國政)</span>
+        <span class="text-[10px] bg-red-700 text-white px-1 border border-white">LV.01</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-red-400">體力</span>
-        <div class="w-32 h-3.5 bg-gray-900 border-2 border-white relative overflow-hidden">
-          <div id="hp-bar" class="h-full bg-gradient-to-r from-red-600 to-amber-500 w-full transition-all duration-300"></div>
+      <!-- HP 血條 -->
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-red-400 font-bold">體力</span>
+        <div class="w-32 h-3 bg-neutral-900 border-2 border-white relative overflow-hidden">
+          <div id="player-hp-bar" class="h-full bg-gradient-to-r from-red-600 to-amber-400 w-full transition-all duration-150"></div>
         </div>
+        <span id="player-hp-text" class="text-yellow-300 font-bold text-[11px]">100</span>
       </div>
-      <div class="flex items-center justify-between text-xs mt-1 text-emerald-400">
-        <span>所持文錢：</span>
-        <span id="player-gold" class="font-bold text-yellow-300 text-sm">1,500 文</span>
+      <!-- 氣力/必殺計量條 -->
+      <div class="flex items-center gap-2">
+        <span class="text-blue-400 font-bold">氣力</span>
+        <div class="w-32 h-2.5 bg-neutral-900 border-2 border-white relative overflow-hidden">
+          <div id="player-sp-bar" class="h-full bg-blue-500 w-full transition-all duration-150"></div>
+        </div>
+        <span id="player-sp-text" class="text-blue-300 font-bold text-[10px]">MAX</span>
+      </div>
+      <!-- 文錢資產與目前手持武器 -->
+      <div class="flex items-center justify-between mt-1 pt-1 border-t border-dashed border-gray-700">
+        <span class="text-emerald-400 font-bold">所持金：<span id="hud-gold" class="text-yellow-300">1,500</span> 文</span>
+        <span class="text-purple-300">手持：<span id="hud-weapon" class="text-white font-bold">徒手</span></span>
       </div>
     </div>
 
-    <!-- 快捷提示與購物車按鈕 -->
-    <div class="flex items-center gap-3 pointer-events-auto">
-      <button id="btn-open-cart" class="nes-box p-3 bg-black/90 flex items-center gap-2 hover:border-yellow-400 cursor-pointer">
-        <span class="text-amber-400 text-lg">🛍️</span>
-        <span class="text-sm">錢袋/購物車</span>
-        <span id="cart-badge" class="bg-red-600 text-white font-bold text-xs px-2 py-0.5 border border-white">0</span>
+    <!-- 右上角快捷功能選單 -->
+    <div class="flex items-center gap-2 pointer-events-auto">
+      <button id="btn-open-cart" class="fc-box p-2.5 bg-black/95 flex items-center gap-2 hover:border-yellow-400 cursor-pointer">
+        <span class="text-base">🛍️</span>
+        <span class="font-bold text-xs">行囊錢袋</span>
+        <span id="cart-badge" class="bg-red-600 text-white font-bold text-[10px] px-1.5 py-0.2 border border-white">0</span>
       </button>
 
-      <button id="btn-toggle-sound" class="nes-box px-3 py-3 bg-black/90 text-xs hover:border-yellow-400 cursor-pointer" title="切換 8-bit 音效">
+      <button id="btn-toggle-bgm" class="fc-box px-2.5 py-2.5 bg-black/95 text-xs hover:border-yellow-400 cursor-pointer" title="切換時代劇 8-bit 背景音樂">
+        🎵 BGM
+      </button>
+      <button id="btn-toggle-sfx" class="fc-box px-2.5 py-2.5 bg-black/95 text-xs hover:border-yellow-400 cursor-pointer">
         🔊 音效
       </button>
     </div>
   </div>
 
-  <!-- 底部動作提示 / 互動按鈕 -->
+  <!-- 提示浮動框（撿拾/進店） -->
   <div class="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-30">
-    <div id="action-hint" class="nes-box px-4 py-2 bg-black/90 text-sm flex items-center gap-2 opacity-0 transition-opacity duration-200">
-      <span class="inline-block px-1.5 py-0.5 bg-yellow-400 text-black font-bold text-xs border border-black">E</span>
-      <span id="hint-text" class="text-yellow-200 font-bold">進入商店</span>
+    <div id="action-hint" class="fc-box px-4 py-2 bg-black/95 text-xs flex items-center gap-2 opacity-0 transition-opacity duration-150">
+      <span class="px-1.5 py-0.5 bg-yellow-400 text-black font-bold text-[11px] border border-black">E</span>
+      <span id="hint-text" class="text-yellow-200 font-bold tracking-wider">調查</span>
     </div>
   </div>
 
-  <!-- 螢幕虛擬搖桿與按鈕（支援手機與觸控/滑鼠操作） -->
-  <div class="absolute bottom-6 left-6 z-30 flex flex-col items-center pointer-events-auto md:hidden opacity-80">
-    <div class="grid grid-cols-3 gap-1 w-32 h-32">
-      <div></div>
-      <button id="vkey-up" class="nes-btn text-xs font-bold py-2">▲</button>
-      <div></div>
-      <button id="vkey-left" class="nes-btn text-xs font-bold py-2">◀</button>
-      <div class="bg-black/50 border border-white/20"></div>
-      <button id="vkey-right" class="nes-btn text-xs font-bold py-2">▶</button>
-      <div></div>
-      <button id="vkey-down" class="nes-btn text-xs font-bold py-2">▼</button>
-      <div></div>
+  <!-- 桌面鍵盤出招說明面板 -->
+  <div class="hidden md:block absolute bottom-4 left-4 z-20 pointer-events-none opacity-85 text-xs text-gray-200 fc-box p-3 bg-black/90">
+    <div class="text-yellow-400 font-bold mb-1.5 flex items-center gap-1">
+      <span>⚔️【熱血時代劇 出招奧義】</span>
+    </div>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+      <div>移動：<span class="text-white font-bold">W A S D</span> (可上下走位)</div>
+      <div>跳躍：<span class="text-white font-bold">Space</span>（空中可踢）</div>
+      <div>拳擊/連打：<span class="text-white font-bold">J</span> 鍵</div>
+      <div>飛踢：<span class="text-white font-bold">K</span> 鍵</div>
+      <div>時代劇奧義【馬赫拳】：<span class="text-yellow-300 font-bold">L</span> 鍵</div>
+      <div>撿起/丟出武器/對話：<span class="text-white font-bold">E</span> 鍵</div>
+    </div>
+    <div class="mt-2 text-[10px] text-gray-400 border-t border-dashed border-gray-700 pt-1">
+      💡 提示：擊破路邊木箱可得木刀與文錢；擊倒惡代官手下會噴出金幣！
     </div>
   </div>
 
-  <div class="absolute bottom-6 right-6 z-30 flex items-center gap-3 pointer-events-auto md:hidden opacity-80">
-    <button id="vkey-attack" class="nes-btn w-14 h-14 rounded-full bg-red-700 text-xs font-bold border-2">B<br><span class="text-[10px]">擊打</span></button>
-    <button id="vkey-action" class="nes-btn w-14 h-14 rounded-full bg-blue-700 text-xs font-bold border-2">A<br><span class="text-[10px]">調查</span></button>
+  <!-- 虛擬按鍵（觸控/手機版） -->
+  <div class="absolute bottom-4 left-4 z-30 flex flex-col items-center pointer-events-auto md:hidden opacity-85">
+    <div class="grid grid-cols-3 gap-1 w-28 h-28">
+      <div></div><button id="vkey-up" class="fc-btn text-xs font-bold py-1.5">▲</button><div></div>
+      <button id="vkey-left" class="fc-btn text-xs font-bold py-1.5">◀</button>
+      <div class="bg-black/60 border border-white/30"></div>
+      <button id="vkey-right" class="fc-btn text-xs font-bold py-1.5">▶</button>
+      <div></div><button id="vkey-down" class="fc-btn text-xs font-bold py-1.5">▼</button><div></div>
+    </div>
   </div>
 
-  <!-- 操作說明面板（桌面版） -->
-  <div class="hidden md:block absolute bottom-4 left-4 z-20 pointer-events-none opacity-80 text-xs text-gray-300 nes-box p-2 bg-black/80">
-    <div class="text-yellow-400 font-bold mb-1">【操作秘技】</div>
-    <div>移動：<span class="text-white font-bold">W A S D</span> 或 方向鍵</div>
-    <div>調查/交談：<span class="text-white font-bold">E</span> 鍵</div>
-    <div>熱血拳擊：<span class="text-white font-bold">空白鍵 (Space)</span> 或 <span class="text-white font-bold">J</span> 鍵（擊破木箱有驚喜）</div>
+  <div class="absolute bottom-4 right-4 z-30 flex items-center gap-2 pointer-events-auto md:hidden opacity-85">
+    <div class="flex flex-col gap-2">
+      <div class="flex gap-2">
+        <button id="vkey-mach" class="fc-btn w-12 h-12 rounded-full bg-amber-700 text-[10px] font-bold">奧義<br>馬赫</button>
+        <button id="vkey-action" class="fc-btn w-12 h-12 rounded-full bg-emerald-700 text-[10px] font-bold">E<br>拾取</button>
+      </div>
+      <div class="flex gap-2">
+        <button id="vkey-punch" class="fc-btn w-12 h-12 rounded-full bg-red-700 text-xs font-bold">J<br>拳</button>
+        <button id="vkey-kick" class="fc-btn w-12 h-12 rounded-full bg-blue-700 text-xs font-bold">K<br>踢</button>
+      </div>
+    </div>
   </div>
 
-  <!-- 彈出對話框 (NES 經典全寬黑底白框) -->
-  <div id="dialog-modal" class="hidden absolute bottom-10 left-1/2 -translate-x-1/2 w-[92%] max-w-3xl z-40">
-    <div class="nes-box p-4 bg-black text-white">
+  <!-- FC 經典全寬黑底對話框 -->
+  <div id="dialog-modal" class="hidden absolute bottom-8 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl z-40">
+    <div class="fc-box p-4 bg-black text-white">
       <div class="flex items-start gap-4">
-        <!-- NPC / 店家頭像像素框 -->
-        <div id="dialog-avatar" class="w-16 h-16 border-2 border-white bg-amber-900 flex-shrink-0 flex items-center justify-center text-3xl">
+        <div id="dialog-avatar" class="w-14 h-14 border-2 border-white bg-amber-950 flex-shrink-0 flex items-center justify-center text-3xl">
           👨‍🌾
         </div>
         <div class="flex-1">
-          <div id="dialog-speaker" class="text-yellow-400 font-bold text-sm mb-1">店主</div>
-          <div id="dialog-content" class="text-base leading-relaxed tracking-wider min-h-[48px]">
-            客官，歡迎來到江戶一番街！
+          <div id="dialog-speaker" class="text-yellow-400 font-bold text-sm mb-1">越後屋掌櫃</div>
+          <div id="dialog-content" class="text-sm leading-relaxed tracking-wider min-h-[42px] text-gray-100">
+            國政大哥！你來得正好，這條街剛被關東浪人鬧得不安寧！
           </div>
-          <div class="flex justify-between items-center mt-3 pt-2 border-t border-dashed border-gray-600">
-            <span class="text-xs text-gray-400 blink">按 [E] 或 點擊 [繼續]</span>
+          <div class="flex justify-between items-center mt-3 pt-2 border-t border-dashed border-gray-700">
+            <span class="text-xs text-yellow-300 blink">按 [E] 繼續 ➔</span>
             <div class="flex gap-2">
-              <button id="btn-view-shop-goods" class="nes-btn px-3 py-1 text-xs bg-amber-600 font-bold">瀏覽商品目錄 ➔</button>
-              <button id="btn-close-dialog" class="nes-btn px-3 py-1 text-xs bg-gray-700">告辭離開</button>
+              <button id="btn-view-shop-goods" class="fc-btn px-3 py-1 text-xs bg-amber-600 font-bold">看鋪子貨品 ➔</button>
+              <button id="btn-close-dialog" class="fc-btn px-3 py-1 text-xs bg-gray-700">告辭</button>
             </div>
           </div>
         </div>
@@ -209,192 +221,291 @@
     </div>
   </div>
 
-  <!-- 電商商品目錄彈窗 (Shop Modal) -->
-  <div id="shop-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="nes-box bg-black text-white w-full max-w-4xl max-h-[90vh] flex flex-col p-5">
-      <!-- 商店標頭 -->
-      <div class="flex justify-between items-center border-b-4 border-white pb-3 mb-4">
-        <div class="flex items-center gap-3">
-          <span id="shop-icon" class="text-2xl">🏬</span>
+  <!-- 電商商品目錄 (Shop Modal) -->
+  <div id="shop-modal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-3">
+    <div class="fc-box bg-black text-white w-full max-w-3xl max-h-[90vh] flex flex-col p-4">
+      <div class="flex justify-between items-center border-b-4 border-white pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span id="shop-icon" class="text-2xl">🌾</span>
           <div>
-            <h2 id="shop-title" class="text-xl font-bold text-yellow-400">江戶名產大鋪</h2>
-            <p id="shop-subtitle" class="text-xs text-gray-400">傳承三百年之極上逸品</p>
+            <h2 id="shop-title" class="text-base font-bold text-yellow-400">越後屋糧鋪</h2>
+            <p id="shop-subtitle" class="text-[11px] text-gray-400">傳承百年之關東第一逸品</p>
           </div>
         </div>
-        <button id="btn-close-shop" class="nes-btn px-3 py-1.5 text-sm bg-red-700 font-bold">✕ 關閉 (ESC)</button>
+        <button id="btn-close-shop" class="fc-btn px-3 py-1 text-xs bg-red-700 font-bold">✕ 關閉 (ESC)</button>
       </div>
 
-      <!-- 商品列表 (GRID) -->
-      <div id="shop-items-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto pr-1 flex-1 py-2">
-        <!-- 動態注入商品卡片 -->
-      </div>
+      <div id="shop-items-container" class="grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto pr-1 flex-1 py-1"></div>
 
-      <!-- 底部提示 -->
-      <div class="mt-4 pt-3 border-t-2 border-dashed border-gray-700 flex justify-between items-center text-xs text-gray-400">
-        <div>💡 提示：街上的木箱可擊破，有機會獲得結帳折價券！</div>
-        <button id="btn-shop-to-cart" class="nes-btn px-4 py-2 bg-emerald-700 text-white font-bold text-xs flex items-center gap-2">
-          前往錢袋結帳 ➔
+      <div class="mt-3 pt-3 border-t-2 border-dashed border-gray-700 flex justify-between items-center text-xs text-gray-400">
+        <div>💡 購買部分食補道具可即時回滿體力！</div>
+        <button id="btn-shop-to-cart" class="fc-btn px-4 py-2 bg-emerald-700 text-white font-bold text-xs flex items-center gap-2">
+          前往行囊結帳 ➔
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 購物車清單彈窗 (Cart Modal) -->
-  <div id="cart-modal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
-    <div class="nes-box bg-black text-white w-full max-w-2xl max-h-[85vh] flex flex-col p-5">
-      <div class="flex justify-between items-center border-b-4 border-white pb-3 mb-4">
+  <!-- 行囊購物車 (Cart Modal) -->
+  <div id="cart-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3">
+    <div class="fc-box bg-black text-white w-full max-w-xl max-h-[85vh] flex flex-col p-4">
+      <div class="flex justify-between items-center border-b-4 border-white pb-3 mb-3">
         <div class="flex items-center gap-2">
           <span class="text-2xl">🎒</span>
-          <h2 class="text-lg font-bold text-yellow-400">行囊錢袋（已選商品）</h2>
+          <h2 class="text-base font-bold text-yellow-400">行囊錢袋（已購逸品）</h2>
         </div>
-        <button id="btn-close-cart" class="nes-btn px-3 py-1 text-sm bg-red-700">✕ 關閉</button>
+        <button id="btn-close-cart" class="fc-btn px-3 py-1 text-xs bg-red-700">✕ 關閉</button>
       </div>
 
-      <div id="cart-items-list" class="flex-1 overflow-y-auto divide-y divide-gray-800 pr-2">
-        <!-- 動態注入購物車項目 -->
-      </div>
+      <div id="cart-items-list" class="flex-1 overflow-y-auto divide-y divide-gray-800 pr-1 text-xs"></div>
 
-      <!-- 優惠代碼輸入區 -->
-      <div class="mt-4 p-3 border-2 border-dashed border-yellow-500 bg-amber-950/40 flex items-center justify-between gap-3">
+      <!-- 時代劇密技折價券 -->
+      <div class="mt-3 p-2.5 border-2 border-dashed border-yellow-500 bg-amber-950/40 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 flex-1">
-          <span class="text-yellow-400 text-sm">🎟️ 折價卷：</span>
-          <input id="coupon-input" type="text" placeholder="輸入破箱獲得的密技代碼" class="bg-black border-2 border-white px-2 py-1 text-xs text-yellow-300 w-full uppercase outline-none focus:border-yellow-400 font-mono">
+          <span class="text-yellow-400 text-xs font-bold">🎟️ 密技奧義：</span>
+          <input id="coupon-input" type="text" placeholder="擊破木箱獲得之代碼 (例: EDO88)" class="bg-black border-2 border-white px-2 py-1 text-xs text-yellow-300 w-full uppercase outline-none focus:border-yellow-400 font-mono">
         </div>
-        <button id="btn-apply-coupon" class="nes-btn px-3 py-1 text-xs bg-yellow-600 font-bold">套用</button>
+        <button id="btn-apply-coupon" class="fc-btn px-3 py-1 text-xs bg-yellow-600 font-bold">套用</button>
       </div>
 
-      <!-- 結帳匯總 -->
-      <div class="mt-4 pt-3 border-t-4 border-white flex justify-between items-center">
+      <div class="mt-3 pt-3 border-t-4 border-white flex justify-between items-center">
         <div>
-          <div class="text-xs text-gray-400">總計金額</div>
-          <div id="cart-total-price" class="text-xl font-bold text-yellow-300">0 文</div>
-          <div id="cart-discount-info" class="text-[11px] text-emerald-400 hidden">已享特別折扣 88 折！</div>
+          <div class="text-[10px] text-gray-400">合計文錢</div>
+          <div id="cart-total-price" class="text-lg font-bold text-yellow-300">0 文</div>
+          <div id="cart-discount-info" class="text-[10px] text-emerald-400 hidden">已享熱血 88 折！</div>
         </div>
-        <button id="btn-checkout" class="nes-btn px-5 py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-sm">
-          🏮 確認交割（下單結帳）
+        <button id="btn-checkout" class="fc-btn px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs">
+          🏮 確 認 交 割（下單）
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 漂浮金幣 / 獲得通知 Toast -->
-  <div id="toast-container" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
 
-  <!-- JavaScript 核心程式碼 -->
+  <!-- 核心遊戲引擎 -->
   <script type="module">
     import * as THREE from 'three';
 
     /* ==========================================================================
-       1. 8-Bit Web Audio 合成音效系統 (無需外部 mp3 即可發出紅白機逼逼聲)
+       1. 8-Bit Web Audio 音頻合成引擎（純程式合成 1991 FC 熱血音效與背景配樂）
        ========================================================================== */
-    class RetroAudio {
+    class JidaigekiAudio {
       constructor() {
         this.ctx = null;
-        this.enabled = true;
+        this.sfxEnabled = true;
+        this.bgmEnabled = true;
+        this.bgmTimer = null;
+        this.bgmStep = 0;
       }
       init() {
         if (!this.ctx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           this.ctx = new AudioContext();
         }
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      }
+
+      // 熱血擊打音效（方波降頻 + 白噪音爆發）
+      playHit() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.12);
+      }
+
+      // 空揮拳腳呼呼聲
+      playSwing() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.08);
+      }
+
+      // 跳躍音效
+      playJump() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.14);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.14);
+      }
+
+      // 時代劇奧義「馬赫拳」音效
+      playMachHit() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(480, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.06);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.06);
+      }
+
+      // 撿起金幣/文錢
+      playCoin() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(987.77, now); // B5
+        osc.frequency.setValueAtTime(1318.51, now + 0.07); // E6
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.28);
+      }
+
+      // 時代劇江戶小調 BGM 循環（經典熱血時代劇風五聲音階）
+      startBGM() {
+        if (!this.bgmEnabled) return;
+        this.init();
+        if (this.bgmTimer) return;
+        
+        // 經典日本律旋法五聲音階 (D minor / 都節音階)
+        const notes = [
+          293.66, 329.63, 349.23, 440.00, 523.25, 587.33,
+          440.00, 349.23, 293.66, 220.00, 293.66, 0,
+          349.23, 392.00, 440.00, 523.25, 587.33, 659.25,
+          587.33, 523.25, 440.00, 349.23, 293.66, 0
+        ];
+        const bassNotes = [
+          146.83, 146.83, 174.61, 220.00, 146.83, 146.83, 110.00, 146.83
+        ];
+
+        this.bgmTimer = setInterval(() => {
+          if (!this.bgmEnabled || !this.ctx) return;
+          const now = this.ctx.currentTime;
+          const melodyFreq = notes[this.bgmStep % notes.length];
+          const bassFreq = bassNotes[Math.floor(this.bgmStep / 3) % bassNotes.length];
+
+          if (melodyFreq > 0) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(melodyFreq, now);
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.005, now + 0.15);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(now); osc.stop(now + 0.16);
+          }
+
+          // 低音伴奏
+          const bassOsc = this.ctx.createOscillator();
+          const bassGain = this.ctx.createGain();
+          bassOsc.type = 'triangle';
+          bassOsc.frequency.setValueAtTime(bassFreq, now);
+          bassGain.gain.setValueAtTime(0.06, now);
+          bassGain.gain.exponentialRampToValueAtTime(0.008, now + 0.18);
+          bassOsc.connect(bassGain); bassGain.connect(this.ctx.destination);
+          bassOsc.start(now); bassOsc.stop(now + 0.19);
+
+          this.bgmStep++;
+        }, 180);
+      }
+
+      stopBGM() {
+        if (this.bgmTimer) {
+          clearInterval(this.bgmTimer);
+          this.bgmTimer = null;
         }
       }
-      playBlip(freq = 440, type = 'square', duration = 0.06) {
-        if (!this.enabled) return;
-        this.init();
-        try {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start();
-          osc.stop(this.ctx.currentTime + duration);
-        } catch(e) {}
-      }
-      playPunch() {
-        if (!this.enabled) return;
-        this.init();
-        try {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(160, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.15);
-          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start();
-          osc.stop(this.ctx.currentTime + 0.15);
-        } catch(e) {}
-      }
-      playCoin() {
-        if (!this.enabled) return;
-        this.init();
-        try {
-          const now = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(987.77, now); // B5
-          osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.35);
-        } catch(e) {}
-      }
-      playFanfare() {
-        if (!this.enabled) return;
-        this.init();
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
-        notes.forEach((freq, idx) => {
-          setTimeout(() => this.playBlip(freq, 'square', 0.12), idx * 100);
-        });
-      }
     }
-    const audio = new RetroAudio();
-    document.getElementById('btn-toggle-sound').addEventListener('click', (e) => {
-      audio.enabled = !audio.enabled;
-      e.target.innerText = audio.enabled ? '🔊 音效' : '🔇 靜音';
+
+    const audio = new JidaigekiAudio();
+
+    document.getElementById('btn-toggle-sfx').addEventListener('click', (e) => {
+      audio.sfxEnabled = !audio.sfxEnabled;
+      e.target.innerText = audio.sfxEnabled ? '🔊 音效' : '🔇 靜音';
+    });
+    document.getElementById('btn-toggle-bgm').addEventListener('click', (e) => {
+      audio.bgmEnabled = !audio.bgmEnabled;
+      if (audio.bgmEnabled) {
+        audio.startBGM();
+        e.target.innerText = '🎵 BGM:開';
+      } else {
+        audio.stopBGM();
+        e.target.innerText = '🎵 BGM:關';
+      }
     });
 
+    // 第一次使用者點擊畫面時自動啟動音頻
+    window.addEventListener('click', () => {
+      audio.init();
+      audio.startBGM();
+    }, { once: true });
+
     /* ==========================================================================
-       2. 電商數據庫 (江戶商店、商品與折價券資料)
+       2. 遊戲狀態與真實電商商品資料庫
        ========================================================================== */
+    const gameState = {
+      gold: 1500,
+      hp: 100,
+      maxHp: 100,
+      sp: 100,
+      maxSp: 100,
+      cart: [],
+      appliedCoupon: null,
+      couponsFound: [],
+      currentShopNear: null,
+      heldWeapon: null // 'bokken' / 'stone' 等
+    };
+
     const SHOP_DATA = {
       rice: {
         id: 'rice',
-        name: '越後屋米糧鋪',
+        name: '駿河 越後屋米糧鋪',
         icon: '🌾',
         speaker: '越後屋掌櫃',
         avatar: '👨‍🌾',
-        intro: '客官好眼光！本店專營天下第一之越後新米與百年醬園古法仙貝，飢腸轆轆時最宜補充體力！',
+        intro: '國政大哥！本店專營天下第一之越後新米與備長炭現烤煎餅，吃一口立刻氣魄百倍！',
         items: [
-          { id: 'r1', name: '特選越後越光米 (5kg)', price: 380, image: '🌾', tag: '當季新穀', desc: '軟糯甘甜，炊飯香氣飄散十里。' },
-          { id: 'r2', name: '江戶名物 備長炭烤醬油仙貝', price: 120, image: '🍘', tag: '茶點首選', desc: '脆爽十足，以純手工生醬油刷烤而成。' },
-          { id: 'r3', name: '佐渡島百年藏造赤味噌', price: 180, image: '🥣', tag: '特產推薦', desc: '風味濃厚甘醇，煮湯或拌飯皆一絕。' }
+          { id: 'r1', name: '極上 越後越光米 (5kg)', price: 380, image: '🌾', tag: '食補回血', desc: '即刻回滿所有體力！煮飯香氣飄散駿河十里。', healHp: 100 },
+          { id: 'r2', name: '備長炭烤 醬油大仙貝', price: 120, image: '🍘', tag: '恢復小品', desc: '回復 40 點體力，酥脆有勁、江戶浪人首選！', healHp: 40 },
+          { id: 'r3', name: '佐渡島古法 熟成赤味噌', price: 180, image: '🥣', tag: '名產逸品', desc: '滋味甘醇，煮湯拌飯皆屬一品。', healHp: 60 }
         ]
       },
       weapon: {
         id: 'weapon',
-        name: '備前鍛冶裝備鋪',
+        name: '備前 奧義鍛冶武具鋪',
         icon: '⚔️',
         speaker: '刀匠 兼光',
         avatar: '👺',
-        intro: '天下動盪，浪人不可一日無防身利器！我這有剛出爐的好鋼與現代潮人必備衣甲！',
+        intro: '天誅惡逆！浪人在江戶街道行走，身上怎能少了防身利刃與熱血潮品！',
         items: [
-          { id: 'w1', name: '妖刀村正 偽裝自動雨傘', price: 650, image: '☂️', tag: '熱銷第一', desc: '握柄仿鯊魚皮柄捲，雨天抽出氣勢如虹！' },
-          { id: 'w2', name: '新選組誠字印花 復古純棉連帽衫', price: 890, image: '🥋', tag: '潮品限量', desc: '淺蔥色山形紋，保暖防風且滿載熱血魂。' },
-          { id: 'w3', name: '忍者煙幕 舒壓香薰蠟燭', price: 290, image: '🕯️', tag: '舒壓逸品', desc: '檜木與松針氣息，點燃瞬間如遁入黑夜。' }
+          { id: 'w1', name: '妖刀村正 偽裝自動雨傘', price: 650, image: '☂️', tag: '現世潮品', desc: '鯊魚皮仿柄捲，雨天抽傘氣勢磅礡！' },
+          { id: 'w2', name: '新選組「誠」字刺繡 連帽風衣', price: 890, image: '🥋', tag: '防禦裝束', desc: '淺蔥色山形紋，保暖防風滿載熱血魂。' },
+          { id: 'w3', name: '時代劇奧義【馬赫拳之書】', price: 300, image: '📜', tag: '永久秘傳', desc: '研讀後提升連擊威力，街頭橫著走！' }
         ]
       },
       tea: {
@@ -403,34 +514,25 @@
         icon: '🍵',
         speaker: '阿茶姑娘',
         avatar: '👧',
-        intro: '一路辛苦了，請先進來喝杯溫潤的宇治玉露，嚐嚐今天早上現做的草莓生巧大福吧～',
+        intro: '國政大人辛苦了！請進來喝碗溫潤的宇治玉露，歇歇腳再收拾那群無賴吧～',
         items: [
-          { id: 't1', name: '宇治特級手採玉露綠茶 (100g)', price: 420, image: '🍵', tag: '回甘極品', desc: '茶湯翠綠如琉璃，初飲甘醇，回味無窮。' },
-          { id: 't2', name: '富士山雪見 宇治抹茶大福 (6入)', price: 260, image: '🍡', tag: '每日現做', desc: '皮薄Q彈，爆漿抹茶甘納許微苦微甜。' },
-          { id: 't3', name: '金箔櫻花落雁糖 伴手禮盒', price: 350, image: '🌸', tag: '贈禮名物', desc: '入口即化，點綴純金箔的宮廷級和菓子。' }
+          { id: 't1', name: '宇治特級手採玉露綠茶 (100g)', price: 420, image: '🍵', tag: '回甘極品', desc: '茶湯翠綠如琉璃，初飲甘醇，回味無窮。', healHp: 50 },
+          { id: 't2', name: '富士山雪見 草莓抹茶大福 (6入)', price: 260, image: '🍡', tag: '限定甜點', desc: '皮薄軟糯，微苦微甘的究極味覺享受。', healHp: 80 },
+          { id: 't3', name: '金箔櫻花落雁糖 伴手盒', price: 350, image: '🌸', tag: '宮廷名菓', desc: '點綴食用純金箔的伴手禮物極品。', healHp: 30 }
         ]
       }
     };
 
-    // 購物車與玩家狀態
-    const gameState = {
-      gold: 1500,
-      hp: 100,
-      cart: [],
-      appliedCoupon: null,
-      couponsFound: [],
-      currentShopNear: null
-    };
-
     /* ==========================================================================
-       3. 像素貼圖生成器 (利用 2D Canvas 手動繪製 8-bit 質感材質)
+       3. 2D 像素點陣圖繪製引擎 (FC 1991 熱血時代劇專屬 Sprite Generator)
        ========================================================================== */
-    function createPixelTexture(drawFn, width = 32, height = 32) {
+    function createPixelCanvasTexture(width, height, drawCallback) {
       const cvs = document.createElement('canvas');
       cvs.width = width;
       cvs.height = height;
       const ctx = cvs.getContext('2d');
-      drawFn(ctx, width, height);
+      ctx.imageSmoothingEnabled = false;
+      drawCallback(ctx, width, height);
       const texture = new THREE.CanvasTexture(cvs);
       texture.magFilter = THREE.NearestFilter;
       texture.minFilter = THREE.NearestFilter;
@@ -438,389 +540,481 @@
       return texture;
     }
 
-    // 街道石板路像素貼圖
-    const roadTexture = createPixelTexture((ctx, w, h) => {
-      ctx.fillStyle = '#423d38';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#5c544c';
-      for (let y = 0; y < h; y += 8) {
-        for (let x = 0; x < w; x += 16) {
-          const offset = (y % 16 === 0) ? 0 : 8;
-          ctx.fillRect(x + offset + 1, y + 1, 14, 6);
-          ctx.fillStyle = '#26221f';
-          ctx.fillRect(x + offset, y + 7, 16, 1);
-          ctx.fillRect(x + offset + 15, y, 1, 8);
-          ctx.fillStyle = '#5c544c';
+    // 建立 16色 FC 熱血人物 Sprite（白衣國政 / 藍衣浪人 / 惡代官手下）
+    function generateJidaigekiCharacterSprite(colorTheme = 'kunimasa', action = 'idle') {
+      const W = 32;
+      const H = 40;
+      return createPixelCanvasTexture(W, H, (ctx) => {
+        ctx.clearRect(0, 0, W, H);
+
+        const isKunio = colorTheme === 'kunimasa';
+        const robeColor = isKunio ? '#f4f4f4' : (colorTheme === 'ronin' ? '#2563eb' : '#d97706');
+        const robeShadow = isKunio ? '#b5b5c2' : (colorTheme === 'ronin' ? '#1d4ed8' : '#92400e');
+        const skinColor = '#ffcca3';
+        const skinShadow = '#e09875';
+        const hairColor = '#18141f';
+        const outlineColor = '#0b0812';
+
+        // 影子（腳下微小投影）
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(16, 38, 9, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 1. 時代劇武士髮髻 (丁髷 Chonmage)
+        ctx.fillStyle = hairColor;
+        ctx.fillRect(11, 4, 10, 8);
+        ctx.fillRect(13, 2, 6, 3); // 頂部髮束
+        ctx.fillStyle = '#ff3333';
+        if (isKunio) ctx.fillRect(14, 3, 4, 2); // 經典紅色髮繩
+
+        // 2. 臉部（經典熱血國夫濃眉、圓眼、硬派臉）
+        ctx.fillStyle = skinColor;
+        ctx.fillRect(11, 10, 10, 8);
+        // 眼睛與濃眉
+        ctx.fillStyle = outlineColor;
+        ctx.fillRect(12, 11, 3, 1); // 左眉
+        ctx.fillRect(17, 11, 3, 1); // 右眉
+        ctx.fillRect(13, 13, 2, 2); // 左眼
+        ctx.fillRect(17, 13, 2, 2); // 右眼
+        ctx.fillStyle = skinShadow;
+        ctx.fillRect(11, 17, 10, 1); // 下巴陰影
+
+        // 3. 和服上身 (Haori / Kimono)
+        ctx.fillStyle = robeColor;
+        ctx.fillRect(9, 18, 14, 11);
+        // 和服交領 (V字開襟)
+        ctx.fillStyle = skinColor;
+        ctx.beginPath();
+        ctx.moveTo(14, 18); ctx.lineTo(18, 18); ctx.lineTo(16, 22);
+        ctx.fill();
+        ctx.fillStyle = robeShadow;
+        ctx.fillRect(9, 27, 14, 2);
+
+        // 黑色腰帶 (Obi)
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(10, 25, 12, 3);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(15, 25, 2, 3); // 腰帶扣
+
+        // 4. 手臂與出招動作 (Punch / Kick / Mach / Idle)
+        ctx.fillStyle = robeColor;
+        if (action === 'punch') {
+          // 右拳向前直擊伸出
+          ctx.fillRect(20, 20, 9, 4);
+          ctx.fillStyle = skinColor;
+          ctx.fillRect(27, 19, 4, 5); // 伸出的鐵拳
+          // 拳風白光
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(30, 20, 2, 3);
+        } else if (action === 'mach') {
+          // 馬赫拳多重拳影殘像
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.fillRect(19, 17, 8, 3);
+          ctx.fillRect(21, 21, 10, 4);
+          ctx.fillRect(18, 25, 8, 3);
+          ctx.fillStyle = skinColor;
+          ctx.fillRect(29, 20, 3, 5);
+        } else if (action === 'kick') {
+          // 飛踢出腿
+          ctx.fillRect(8, 20, 4, 6);
+        } else if (action === 'walk') {
+          ctx.fillRect(7, 20, 3, 6);
+          ctx.fillRect(22, 20, 3, 6);
+        } else {
+          // idle
+          ctx.fillRect(7, 19, 3, 7);
+          ctx.fillRect(22, 19, 3, 7);
         }
-      }
-    }, 64, 64);
-    roadTexture.wrapS = THREE.RepeatWrapping;
-    roadTexture.wrapT = THREE.RepeatWrapping;
-    roadTexture.repeat.set(12, 2);
 
-    // 町屋木紋與格子窗貼圖
-    const machiyaWallTexture = createPixelTexture((ctx, w, h) => {
-      ctx.fillStyle = '#3a271d'; // 深木色
-      ctx.fillRect(0, 0, w, h);
-      // 木條紋
-      ctx.fillStyle = '#22150e';
-      for (let x = 0; x < w; x += 4) {
-        ctx.fillRect(x, 0, 1, h);
-      }
-      // 白紙障子格子
-      ctx.fillStyle = '#f5eedb';
-      ctx.fillRect(4, 6, 24, 18);
-      ctx.fillStyle = '#22150e';
-      ctx.fillRect(4, 15, 24, 1);
-      ctx.fillRect(16, 6, 1, 18);
-    }, 32, 32);
-
-    // 暖簾 (Noren) 貼圖
-    function createNorenTexture(color, text) {
-      return createPixelTexture((ctx, w, h) => {
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, w, h);
-        // 簾縫隙
-        ctx.fillStyle = '#111';
-        ctx.fillRect(w / 3 - 1, h / 2, 2, h / 2);
-        ctx.fillRect((w * 2) / 3 - 1, h / 2, 2, h / 2);
-        // 簾字
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, w / 2, h / 3);
-      }, 32, 32);
+        // 5. 雙腿與木屐 (Geta)
+        ctx.fillStyle = skinColor;
+        if (action === 'kick') {
+          // 單腿站立，一腿向右橫踢
+          ctx.fillRect(11, 29, 4, 7); // 支撐腿
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(10, 35, 6, 3); // 木屐
+          // 踢出的腿
+          ctx.fillStyle = skinColor;
+          ctx.fillRect(16, 26, 12, 4);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(27, 25, 4, 6); // 飛踢木屐
+        } else if (action === 'walk') {
+          ctx.fillRect(10, 29, 4, 7);
+          ctx.fillRect(18, 28, 4, 8);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(9, 35, 5, 3);
+          ctx.fillRect(18, 35, 5, 3);
+        } else {
+          // idle
+          ctx.fillRect(11, 29, 4, 7);
+          ctx.fillRect(17, 29, 4, 7);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(10, 35, 5, 3);
+          ctx.fillRect(17, 35, 5, 3);
+        }
+      });
     }
 
-    // 木箱貼圖
-    const crateTexture = createPixelTexture((ctx, w, h) => {
-      ctx.fillStyle = '#b4783c';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#613c17';
-      ctx.strokeRect(1, 1, w - 2, h - 2);
+    // 2D 掉落文錢 (寬永通寶 圓形方孔錢)
+    const coinTexture = createPixelCanvasTexture(16, 16, (ctx) => {
+      ctx.fillStyle = '#ca8a04';
       ctx.beginPath();
-      ctx.moveTo(2, 2); ctx.lineTo(w - 2, h - 2);
-      ctx.moveTo(w - 2, 2); ctx.lineTo(2, h - 2);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }, 16, 16);
+      ctx.arc(8, 8, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(7, 7, 6, 0, Math.PI * 2);
+      ctx.fill();
+      // 中間方形小孔
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(6, 6, 4, 4);
+    });
+
+    // 2D 掉落武器：木刀 (Bokken)
+    const bokkenTexture = createPixelCanvasTexture(24, 24, (ctx) => {
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.moveTo(3, 21); ctx.lineTo(21, 3); ctx.lineTo(23, 4); ctx.lineTo(4, 23);
+      ctx.fill();
+      // 刀柄纏繩
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(3, 19, 3, 3);
+      ctx.fillRect(5, 17, 3, 3);
+    });
+
+    // 2D 掉落武器：石塊
+    const stoneTexture = createPixelCanvasTexture(16, 16, (ctx) => {
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.arc(8, 8, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(6, 5, 4, 3);
+    });
 
     /* ==========================================================================
-       4. Three.js 核心場景與熱血物語 2.5D 視角配置
+       4. Three.js 2.5D 場景搭建（駿河江戶街景、富士山背景、町屋）
        ========================================================================== */
     const canvas = document.getElementById('game-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    
-    // 渲染設定：設定低原生解析度 (例如 480x270)，透過 CSS 自動近鄰縮放，達到原生 FC 點陣顆粒
     const INTERNAL_WIDTH = 480;
     const INTERNAL_HEIGHT = 270;
     renderer.setSize(INTERNAL_WIDTH, INTERNAL_HEIGHT, false);
     renderer.setPixelRatio(1);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap; // 像素風硬邊陰影
+    renderer.shadowMap.type = THREE.BasicShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#14142b');
-    scene.fog = new THREE.Fog('#14142b', 20, 50);
+    scene.background = new THREE.Color('#141022');
+    scene.fog = new THREE.Fog('#141022', 25, 60);
 
-    // 鏡頭視角：帶俯角的 2.5D 斜向橫向捲軸 (經典 River City Ransom 視角)
-    const camera = new THREE.PerspectiveCamera(38, INTERNAL_WIDTH / INTERNAL_HEIGHT, 0.1, 100);
-    // 固定傾角與高度
-    const CAMERA_OFFSET_Y = 5.2;
-    const CAMERA_OFFSET_Z = 9.5;
+    // 鏡頭視角：熱血時代劇經典 2.5D 略帶斜角橫向捲軸
+    const camera = new THREE.PerspectiveCamera(35, INTERNAL_WIDTH / INTERNAL_HEIGHT, 0.1, 100);
+    const CAMERA_OFFSET_Y = 4.8;
+    const CAMERA_OFFSET_Z = 10.5;
     camera.position.set(0, CAMERA_OFFSET_Y, CAMERA_OFFSET_Z);
     camera.lookAt(0, 1.2, 0);
 
-    // 燈光：復古夜晚暖黃燈籠光 + 環境月光
-    const ambientLight = new THREE.AmbientLight('#5c608a', 1.2);
+    // 暖系夜晚燈籠光與月光
+    const ambientLight = new THREE.AmbientLight('#62668e', 1.4);
     scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight('#ffe8b0', 1.6);
-    dirLight.position.set(10, 15, 8);
+    const dirLight = new THREE.DirectionalLight('#ffe8ba', 1.6);
+    dirLight.position.set(12, 18, 9);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 512;
-    dirLight.shadow.mapSize.height = 512;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 35;
-    dirLight.shadow.camera.left = -15;
-    dirLight.shadow.camera.right = 15;
-    dirLight.shadow.camera.top = 10;
-    dirLight.shadow.camera.bottom = -10;
     scene.add(dirLight);
 
-    /* ==========================================================================
-       5. 場景元素建置（街道、町屋商店、燈籠、可打破木箱）
-       ========================================================================== */
-    // 街道地面 (Z 軸 -2.5 ~ 2.5 允許玩家前後走動，X 軸為長街)
-    const groundGeo = new THREE.PlaneGeometry(60, 7);
-    const groundMat = new THREE.MeshLambertMaterial({ map: roadTexture });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
+    // 遠景 2.5D 富士山與晚霞天空板
+    const fujiTexture = createPixelCanvasTexture(128, 64, (ctx) => {
+      // 漸層晚霞天色
+      const grad = ctx.createLinearGradient(0, 0, 0, 64);
+      grad.addColorStop(0, '#1a1038');
+      grad.addColorStop(0.5, '#4a154b');
+      grad.addColorStop(1, '#b45309');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 64);
+
+      // 富士山輪廓 (Mount Fuji)
+      ctx.fillStyle = '#22194d';
+      ctx.beginPath();
+      ctx.moveTo(32, 64);
+      ctx.lineTo(64, 18);
+      ctx.lineTo(76, 18);
+      ctx.lineTo(108, 64);
+      ctx.fill();
+
+      // 富士山頂積雪
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(64, 18);
+      ctx.lineTo(76, 18);
+      ctx.lineTo(82, 28);
+      ctx.lineTo(74, 25);
+      ctx.lineTo(70, 31);
+      ctx.lineTo(66, 26);
+      ctx.lineTo(58, 28);
+      ctx.fill();
+    });
+    const fujiMat = new THREE.MeshBasicMaterial({ map: fujiTexture, depthWrite: false });
+    const fujiPlane = new THREE.Mesh(new THREE.PlaneGeometry(50, 20), fujiMat);
+    fujiPlane.position.set(0, 8, -12);
+    scene.add(fujiPlane);
+
+    // 街道地面（2.5D 石板路，Z 軸深度 -2.4 ~ 2.4 可自由上下跑位）
+    const streetTex = createPixelCanvasTexture(64, 64, (ctx) => {
+      ctx.fillStyle = '#3c3532';
+      ctx.fillRect(0, 0, 64, 64);
+      ctx.fillStyle = '#4f4743';
+      for (let y = 0; y < 64; y += 8) {
+        for (let x = 0; x < 64; x += 16) {
+          const shift = (y % 16 === 0) ? 0 : 8;
+          ctx.fillRect(x + shift + 1, y + 1, 14, 6);
+          ctx.fillStyle = '#211d1b';
+          ctx.fillRect(x + shift, y + 7, 16, 1);
+          ctx.fillStyle = '#4f4743';
+        }
+      }
+    });
+    streetTex.wrapS = streetTex.wrapT = THREE.RepeatWrapping;
+    streetTex.repeat.set(16, 2);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 8), new THREE.MeshLambertMaterial({ map: streetTex }));
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(0, 0, 0);
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // 江戶商店陣列
+    // 2.5D 町屋建築（米糧鋪、鍛冶屋、茶房）
+    const machiyaWallTex = createPixelCanvasTexture(32, 32, (ctx) => {
+      ctx.fillStyle = '#2c1e17'; ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#1c130e';
+      for (let x = 0; x < 32; x += 4) ctx.fillRect(x, 0, 1, 32);
+      ctx.fillStyle = '#f6f0dd'; ctx.fillRect(4, 6, 24, 18);
+      ctx.fillStyle = '#1c130e';
+      ctx.fillRect(4, 15, 24, 1);
+      ctx.fillRect(16, 6, 1, 18);
+    });
+
     const shopsInScene = [];
+    function buildMachiyaShop(xPos, shopKey, norenText, norenBg) {
+      const grp = new THREE.Group();
+      grp.position.set(xPos, 0, -3.4);
 
-    function buildMachiyaShop(xPos, shopKey, norenColor, norenText) {
-      const group = new THREE.Group();
-      group.position.set(xPos, 0, -3.2);
+      // 屋身
+      const house = new THREE.Mesh(new THREE.BoxGeometry(4.4, 3.4, 2.5), new THREE.MeshLambertMaterial({ map: machiyaWallTex }));
+      house.position.y = 1.7; house.castShadow = true; grp.add(house);
 
-      // 主屋身
-      const houseGeo = new THREE.BoxGeometry(4.2, 3.2, 2.5);
-      const houseMat = new THREE.MeshLambertMaterial({ map: machiyaWallTexture });
-      const house = new THREE.Mesh(houseGeo, houseMat);
-      house.position.y = 1.6;
-      house.castShadow = true;
-      house.receiveShadow = true;
-      group.add(house);
-
-      // 黑瓦斜屋頂
-      const roofGeo = new THREE.ConeGeometry(3.4, 1.2, 4);
-      const roofMat = new THREE.MeshLambertMaterial({ color: '#1e2029' });
-      const roof = new THREE.Mesh(roofGeo, roofMat);
-      roof.position.set(0, 3.7, 0);
-      roof.rotation.y = Math.PI / 4;
-      roof.scale.set(1.4, 1, 0.9);
-      roof.castShadow = true;
-      group.add(roof);
+      // 瓦屋頂
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.6, 1.3, 4), new THREE.MeshLambertMaterial({ color: '#1a1c24' }));
+      roof.position.set(0, 3.8, 0); roof.rotation.y = Math.PI / 4; roof.scale.set(1.4, 1, 0.9);
+      roof.castShadow = true; grp.add(roof);
 
       // 暖簾 (Noren)
-      const norenTex = createNorenTexture(norenColor, norenText);
-      const norenGeo = new THREE.PlaneGeometry(2.4, 0.9);
-      const norenMat = new THREE.MeshBasicMaterial({ map: norenTex, transparent: true });
-      const noren = new THREE.Mesh(norenGeo, norenMat);
-      noren.position.set(0, 1.7, 1.28);
-      group.add(noren);
-
-      // 門口發光紅燈籠 (Chouchin)
-      const lanternGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 6);
-      const lanternMat = new THREE.MeshBasicMaterial({ color: '#ff3b30' });
-      const lantern = new THREE.Mesh(lanternGeo, lanternMat);
-      lantern.position.set(1.6, 2.0, 1.4);
-      group.add(lantern);
-
-      // 燈籠點光源
-      const lanternLight = new THREE.PointLight('#ff8844', 1.2, 5);
-      lanternLight.position.set(1.6, 2.0, 1.5);
-      group.add(lanternLight);
-
-      // 互動觸發提示方塊 (頭頂驚嘆號)
-      const hintGeo = new THREE.PlaneGeometry(0.6, 0.6);
-      const hintTex = createPixelTexture((ctx, w, h) => {
-        ctx.fillStyle = '#ffcc00';
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 22px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('商', w / 2, h / 2);
-      }, 32, 32);
-      const hintMat = new THREE.MeshBasicMaterial({ map: hintTex, transparent: true });
-      const hintMesh = new THREE.Mesh(hintGeo, hintMat);
-      hintMesh.position.set(0, 4.3, 0);
-      group.add(hintMesh);
-
-      scene.add(group);
-
-      shopsInScene.push({
-        key: shopKey,
-        data: SHOP_DATA[shopKey],
-        position: new THREE.Vector3(xPos, 0, -1.8),
-        hintMesh: hintMesh
+      const norenTex = createPixelCanvasTexture(32, 32, (ctx) => {
+        ctx.fillStyle = norenBg; ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#111'; ctx.fillRect(10, 16, 2, 16); ctx.fillRect(20, 16, 2, 16);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(norenText, 16, 12);
       });
+      const noren = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.0), new THREE.MeshBasicMaterial({ map: norenTex, transparent: true }));
+      noren.position.set(0, 1.8, 1.28); grp.add(noren);
+
+      // 紅提燈
+      const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 6), new THREE.MeshBasicMaterial({ color: '#dc2626' }));
+      lantern.position.set(1.7, 2.1, 1.4); grp.add(lantern);
+      const lanternLight = new THREE.PointLight('#f97316', 1.2, 5);
+      lanternLight.position.set(1.7, 2.1, 1.5); grp.add(lanternLight);
+
+      // 頂部懸浮指示「商」
+      const markTex = createPixelCanvasTexture(32, 32, (ctx) => {
+        ctx.fillStyle = '#facc15'; ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#000'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('商', 16, 24);
+      });
+      const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshBasicMaterial({ map: markTex, transparent: true }));
+      mark.position.set(0, 4.4, 0); grp.add(mark);
+
+      scene.add(grp);
+      shopsInScene.push({ key: shopKey, data: SHOP_DATA[shopKey], position: new THREE.Vector3(xPos, 0, -2.0), mark });
     }
 
-    // 建立三家風格町屋
-    buildMachiyaShop(-8, 'rice', '#8b5a2b', '米');
-    buildMachiyaShop(0, 'weapon', '#8b2500', '武');
-    buildMachiyaShop(8, 'tea', '#2e5b3f', '茶');
+    buildMachiyaShop(-9, 'rice', '米', '#78350f');
+    buildMachiyaShop(0, 'weapon', '武', '#991b1b');
+    buildMachiyaShop(9, 'tea', '茶', '#166534');
 
-    // 可打破的木箱 (Crates)
+    /* ==========================================================================
+       5. 2D Billboard 精靈系統（主角國政、敵人浪人、掉落物、木箱）
+       ========================================================================== */
+    // 預先載入主角國政 Sprite 動作材質字典
+    const playerSprites = {
+      idle: generateJidaigekiCharacterSprite('kunimasa', 'idle'),
+      walk: generateJidaigekiCharacterSprite('kunimasa', 'walk'),
+      punch: generateJidaigekiCharacterSprite('kunimasa', 'punch'),
+      kick: generateJidaigekiCharacterSprite('kunimasa', 'kick'),
+      mach: generateJidaigekiCharacterSprite('kunimasa', 'mach')
+    };
+
+    // 建立主角 2D Sprite 網格（立在 2.5D 空間）
+    const playerMat = new THREE.MeshBasicMaterial({ map: playerSprites.idle, transparent: true, side: THREE.DoubleSide });
+    const playerMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0), playerMat);
+    playerMesh.position.set(-6, 1.0, 0);
+    playerMesh.castShadow = true;
+    scene.add(playerMesh);
+
+    // 主角狀態
+    const playerObj = {
+      mesh: playerMesh,
+      x: -6, y: 0, z: 0,
+      vx: 0, vy: 0, vz: 0,
+      isGrounded: true,
+      facing: 1, // 1: 右, -1: 左
+      action: 'idle',
+      actionTimer: 0,
+      combo: 0
+    };
+
+    // 掉落物陣列（金幣、木刀、石塊）
+    const droppedItems = [];
+    function spawnDroppedItem(type, x, z) {
+      const tex = (type === 'coin') ? coinTexture : (type === 'bokken' ? bokkenTexture : stoneTexture);
+      const size = (type === 'coin') ? 0.6 : (type === 'bokken' ? 0.9 : 0.6);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
+      mesh.position.set(x, 0.4, z);
+      scene.add(mesh);
+      droppedItems.push({ mesh, type, x, z, y: 0.4, vy: 0.12, alive: true });
+    }
+
+    // 可擊破木箱 (Crates)
+    const crateTexture = createPixelCanvasTexture(24, 24, (ctx) => {
+      ctx.fillStyle = '#b45309'; ctx.fillRect(0, 0, 24, 24);
+      ctx.fillStyle = '#78350f'; ctx.strokeRect(1, 1, 22, 22);
+      ctx.beginPath();
+      ctx.moveTo(2, 2); ctx.lineTo(22, 22); ctx.moveTo(22, 2); ctx.lineTo(2, 22);
+      ctx.lineWidth = 2; ctx.stroke();
+    });
+
     const crates = [];
     function spawnCrate(x, z) {
-      const geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-      const mat = new THREE.MeshLambertMaterial({ map: crateTexture });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, 0.4, z);
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.85, 0.85), new THREE.MeshLambertMaterial({ map: crateTexture }));
+      mesh.position.set(x, 0.42, z);
       mesh.castShadow = true;
-      mesh.receiveShadow = true;
       scene.add(mesh);
-      crates.push({
-        mesh: mesh,
-        alive: true,
-        x: x,
-        z: z
-      });
+      crates.push({ mesh, x, z, alive: true });
     }
-    spawnCrate(-4, 0.8);
-    spawnCrate(4, -0.6);
-    spawnCrate(13, 0.5);
+    spawnCrate(-4.5, 0.8);
+    spawnCrate(4.2, -0.6);
+    spawnCrate(14, 0.5);
 
-    // 木箱擊破後的碎片微粒
+    // 木箱碎片粒子
     const debrisList = [];
-    function breakCrate(crate) {
-      crate.alive = false;
-      scene.remove(crate.mesh);
-      audio.playPunch();
+    function breakCrate(c) {
+      c.alive = false;
+      scene.remove(c.mesh);
+      audio.playHit();
 
-      // 碎裂小方塊
-      for (let i = 0; i < 8; i++) {
-        const dGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        const dMat = new THREE.MeshLambertMaterial({ color: '#b4783c' });
-        const dMesh = new THREE.Mesh(dGeo, dMat);
-        dMesh.position.set(
-          crate.x + (Math.random() - 0.5) * 0.4,
-          0.4 + (Math.random() - 0.5) * 0.4,
-          crate.z + (Math.random() - 0.5) * 0.4
-        );
+      for (let i = 0; i < 7; i++) {
+        const dMesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshLambertMaterial({ color: '#b45309' }));
+        dMesh.position.set(c.x, 0.4, c.z);
         scene.add(dMesh);
         debrisList.push({
           mesh: dMesh,
-          vx: (Math.random() - 0.5) * 0.1,
-          vy: Math.random() * 0.15 + 0.08,
-          vz: (Math.random() - 0.5) * 0.1,
-          life: 30
+          vx: (Math.random() - 0.5) * 0.12,
+          vy: Math.random() * 0.16 + 0.06,
+          vz: (Math.random() - 0.5) * 0.12,
+          life: 25
         });
       }
 
-      // 掉落獎勵：金幣或折價券
+      // 掉落獎勵：木刀或文錢或密技折價券
       setTimeout(() => {
-        audio.playCoin();
-        const dropType = Math.random() > 0.4 ? 'gold' : 'coupon';
-        if (dropType === 'gold') {
-          const award = 100;
-          gameState.gold += award;
-          updateHUD();
-          showToast(`💰 擊破木箱！獲得 ${award} 文錢！`);
+        const rnd = Math.random();
+        if (rnd < 0.4) {
+          spawnDroppedItem('bokken', c.x, c.z);
+          showToast('🗡️ 箱子爆出【木刀】！按 E 撿起武器！');
+        } else if (rnd < 0.75) {
+          spawnDroppedItem('coin', c.x, c.z);
         } else {
-          const code = 'EDO88';
-          gameState.couponsFound.push(code);
-          showToast(`🎟️ 尋獲神秘密技卷軸！折扣碼：【 ${code} 】`);
+          gameState.couponsFound.push('EDO88');
+          showToast('🎟️ 尋獲時代劇密技卷軸！折扣碼：【 EDO88 】');
         }
       }, 100);
     }
 
-    /* ==========================================================================
-       6. 玩家角色建置（Voxel 8-bit 熱血浪人模型與骨骼晃動動畫）
-       ========================================================================== */
-    const playerGroup = new THREE.Group();
-    playerGroup.position.set(-6, 0, 0);
+    // 敵人系統（2D 浪人與無賴）
+    const enemySprites = {
+      idle: generateJidaigekiCharacterSprite('ronin', 'idle'),
+      walk: generateJidaigekiCharacterSprite('ronin', 'walk'),
+      hit: generateJidaigekiCharacterSprite('ronin', 'punch')
+    };
 
-    // 身體 (外袍和服)
-    const bodyGeo = new THREE.BoxGeometry(0.7, 0.8, 0.5);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: '#ffffff' }); // 熱血系列經典白制服/白和服
-    const playerBody = new THREE.Mesh(bodyGeo, bodyMat);
-    playerBody.position.y = 0.8;
-    playerBody.castShadow = true;
-    playerGroup.add(playerBody);
-
-    // 頭部
-    const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.55);
-    const skinMat = new THREE.MeshLambertMaterial({ color: '#ffcc99' });
-    const playerHead = new THREE.Mesh(headGeo, skinMat);
-    playerHead.position.y = 1.5;
-    playerHead.castShadow = true;
-    playerGroup.add(playerHead);
-
-    // 經典熱血紅頭帶 (Hachimaki)
-    const bandGeo = new THREE.BoxGeometry(0.64, 0.14, 0.58);
-    const bandMat = new THREE.MeshLambertMaterial({ color: '#e60012' });
-    const playerBand = new THREE.Mesh(bandGeo, bandMat);
-    playerBand.position.y = 1.62;
-    playerGroup.add(playerBand);
-
-    // 頭帶飄帶尾巴
-    const tailGeo = new THREE.BoxGeometry(0.3, 0.12, 0.05);
-    const playerBandTail = new THREE.Mesh(tailGeo, bandMat);
-    playerBandTail.position.set(-0.35, 1.62, -0.28);
-    playerGroup.add(playerBandTail);
-
-    // 雙腿
-    const legGeo = new THREE.BoxGeometry(0.24, 0.45, 0.3);
-    const legMat = new THREE.MeshLambertMaterial({ color: '#1a1a24' });
-    const legL = new THREE.Mesh(legGeo, legMat);
-    legL.position.set(-0.18, 0.22, 0);
-    legL.castShadow = true;
-    playerGroup.add(legL);
-
-    const legR = new THREE.Mesh(legGeo, legMat);
-    legR.position.set(0.18, 0.22, 0);
-    legR.castShadow = true;
-    playerGroup.add(legR);
-
-    // 拳頭（出拳時伸出）
-    const fistGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-    const fistMesh = new THREE.Mesh(fistGeo, skinMat);
-    fistMesh.position.set(0.5, 0.8, 0.2);
-    fistMesh.visible = false;
-    playerGroup.add(fistMesh);
-
-    scene.add(playerGroup);
-
-    /* ==========================================================================
-       7. NPC 行人系統（在街道閒晃的町民）
-       ========================================================================== */
-    const npcs = [];
-    function createNPC(x, z, color, name, quote) {
-      const npcGrp = new THREE.Group();
-      npcGrp.position.set(x, 0, z);
-
-      const b = new THREE.Mesh(bodyGeo, new THREE.MeshLambertMaterial({ color: color }));
-      b.position.y = 0.8;
-      b.castShadow = true;
-      npcGrp.add(b);
-
-      const h = new THREE.Mesh(headGeo, skinMat);
-      h.position.y = 1.5;
-      npcGrp.add(h);
-
-      scene.add(npcGrp);
-      npcs.push({
-        group: npcGrp,
-        name: name,
-        quote: quote,
-        speed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1),
-        minX: x - 4,
-        maxX: x + 4
+    const enemies = [];
+    function spawnEnemy(x, z, name = '惡代官手下') {
+      const mat = new THREE.MeshBasicMaterial({ map: enemySprites.idle, transparent: true, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0), mat);
+      mesh.position.set(x, 1.0, z);
+      scene.add(mesh);
+      enemies.push({
+        mesh, name, x, z, y: 0,
+        hp: 45, maxHp: 45,
+        facing: -1,
+        state: 'patrol',
+        stateTimer: 0,
+        hitCooldown: 0,
+        alive: true
       });
     }
-    createNPC(-2, 1.2, '#3b82f6', '行商人', '聽說備前屋新進了一批極品雨傘，雨天防身一流！');
-    createNPC(5, -0.8, '#a855f7', '醉漢武士', '嗝... 這條街的玉露茶點... 真是人間極品...！');
+    spawnEnemy(-1.5, 0.5, '浪花幫 浪士');
+    spawnEnemy(6.0, -0.8, '關東無賴 虎次郎');
+    spawnEnemy(12.0, 1.0, '惡代官保鑣');
+
+    // 打擊飄字 Damage Float
+    function showDamageFloat(val, x, y, z) {
+      const div = document.createElement('div');
+      div.className = 'fixed font-nes text-yellow-400 font-bold text-sm pointer-events-none z-50';
+      div.innerText = val;
+      document.body.appendChild(div);
+
+      // 將 3D 座標轉為螢幕 2D 像素
+      const pos = new THREE.Vector3(x, y + 1.2, z).project(camera);
+      const screenX = (pos.x * 0.5 + 0.5) * window.innerWidth;
+      const screenY = (-(pos.y * 0.5) + 0.5) * window.innerHeight;
+      div.style.left = `${screenX}px`;
+      div.style.top = `${screenY}px`;
+
+      let topOffset = 0;
+      const timer = setInterval(() => {
+        topOffset -= 2;
+        div.style.transform = `translateY(${topOffset}px)`;
+      }, 20);
+
+      setTimeout(() => {
+        clearInterval(timer);
+        div.remove();
+      }, 600);
+    }
 
     /* ==========================================================================
-       8. 玩家控制與遊戲邏輯循環 (Keyboard & Virtual Keys)
+       6. 玩家控制與格鬥攻擊連招邏輯 (Controls & Combat)
        ========================================================================== */
-    const keys = {
-      up: false, down: false, left: false, right: false,
-      attack: false, interact: false
-    };
+    const keys = { up: false, down: false, left: false, right: false };
 
     window.addEventListener('keydown', (e) => {
       if (document.activeElement.tagName === 'INPUT') return;
-      switch(e.code) {
+      switch (e.code) {
         case 'KeyW': case 'ArrowUp': keys.up = true; break;
         case 'KeyS': case 'ArrowDown': keys.down = true; break;
         case 'KeyA': case 'ArrowLeft': keys.left = true; break;
         case 'KeyD': case 'ArrowRight': keys.right = true; break;
-        case 'Space': case 'KeyJ':
-          e.preventDefault();
-          triggerAttack();
-          break;
-        case 'KeyE': case 'Enter':
-          e.preventDefault();
-          triggerInteract();
-          break;
-        case 'Escape':
-          closeAllModals();
-          break;
+        case 'Space': e.preventDefault(); triggerJump(); break;
+        case 'KeyJ': e.preventDefault(); triggerPunch(); break;
+        case 'KeyK': e.preventDefault(); triggerKick(); break;
+        case 'KeyL': e.preventDefault(); triggerMachPunch(); break;
+        case 'KeyE': case 'Enter': e.preventDefault(); triggerInteractOrPickup(); break;
+        case 'Escape': closeAllModals(); break;
       }
     });
 
     window.addEventListener('keyup', (e) => {
-      switch(e.code) {
+      switch (e.code) {
         case 'KeyW': case 'ArrowUp': keys.up = false; break;
         case 'KeyS': case 'ArrowDown': keys.down = false; break;
         case 'KeyA': case 'ArrowLeft': keys.left = false; break;
@@ -828,90 +1022,189 @@
       }
     });
 
-    // 虛擬鍵盤綁定
-    const bindTouch = (id, keyName) => {
-      const btn = document.getElementById(id);
-      btn.addEventListener('pointerdown', (e) => { e.preventDefault(); keys[keyName] = true; });
-      btn.addEventListener('pointerup', (e) => { e.preventDefault(); keys[keyName] = false; });
-      btn.addEventListener('pointerleave', (e) => { e.preventDefault(); keys[keyName] = false; });
+    // 手機觸控事件綁定
+    const bindTouch = (id, k) => {
+      const el = document.getElementById(id);
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); keys[k] = true; });
+      el.addEventListener('pointerup', (e) => { e.preventDefault(); keys[k] = false; });
+      el.addEventListener('pointerleave', (e) => { e.preventDefault(); keys[k] = false; });
     };
-    bindTouch('vkey-up', 'up');
-    bindTouch('vkey-down', 'down');
-    bindTouch('vkey-left', 'left');
-    bindTouch('vkey-right', 'right');
-    document.getElementById('vkey-attack').addEventListener('click', triggerAttack);
-    document.getElementById('vkey-action').addEventListener('click', triggerInteract);
+    bindTouch('vkey-up', 'up'); bindTouch('vkey-down', 'down');
+    bindTouch('vkey-left', 'left'); bindTouch('vkey-right', 'right');
+    document.getElementById('vkey-punch').addEventListener('click', triggerPunch);
+    document.getElementById('vkey-kick').addEventListener('click', triggerKick);
+    document.getElementById('vkey-mach').addEventListener('click', triggerMachPunch);
+    document.getElementById('vkey-action').addEventListener('click', triggerInteractOrPickup);
 
-    // 出拳動作邏輯
-    let isAttacking = false;
-    function triggerAttack() {
-      if (isAttacking) return;
-      isAttacking = true;
-      audio.playPunch();
-      fistMesh.visible = true;
+    function triggerJump() {
+      if (playerObj.isGrounded) {
+        playerObj.vy = 0.22;
+        playerObj.isGrounded = false;
+        audio.playJump();
+      }
+    }
 
-      // 檢查是否命中附近的木箱
-      const punchRange = 1.2;
+    // 揮拳 (J)
+    function triggerPunch() {
+      if (playerObj.actionTimer > 0) return;
+      playerObj.action = 'punch';
+      playerObj.actionTimer = 10;
+      playerMesh.material.map = playerSprites.punch;
+
+      if (gameState.heldWeapon === 'bokken') {
+        audio.playSwing();
+      } else {
+        audio.playSwing();
+      }
+
+      executeHitDetection(gameState.heldWeapon === 'bokken' ? 25 : 15, 1.4);
+    }
+
+    // 飛踢 (K)
+    function triggerKick() {
+      if (playerObj.actionTimer > 0) return;
+      playerObj.action = 'kick';
+      playerObj.actionTimer = 12;
+      playerMesh.material.map = playerSprites.kick;
+      audio.playSwing();
+      executeHitDetection(20, 1.5);
+    }
+
+    // 時代劇奧義【馬赫拳】(L) - 連續 4 段方波急速打擊！
+    function triggerMachPunch() {
+      if (playerObj.actionTimer > 0) return;
+      playerObj.action = 'mach';
+      playerObj.actionTimer = 22;
+      playerMesh.material.map = playerSprites.mach;
+
+      let count = 0;
+      const machInterval = setInterval(() => {
+        audio.playMachHit();
+        executeHitDetection(12, 1.6);
+        count++;
+        if (count >= 4) clearInterval(machInterval);
+      }, 80);
+    }
+
+    // 攻擊判定範圍與擊中計算
+    function executeHitDetection(damage, range) {
+      // 1. 檢測木箱
       crates.forEach(c => {
         if (!c.alive) return;
-        const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
-        if (dist < punchRange) {
+        const dx = (playerObj.x - c.x) * playerObj.facing;
+        const dz = Math.abs(playerObj.z - c.z);
+        if (dx < 0 && dx > -range && dz < 0.9) {
           breakCrate(c);
         }
       });
 
-      setTimeout(() => {
-        fistMesh.visible = false;
-        isAttacking = false;
-      }, 160);
+      // 2. 檢測敵人
+      enemies.forEach(en => {
+        if (!en.alive) return;
+        const dx = (playerObj.x - en.x) * playerObj.facing;
+        const dz = Math.abs(playerObj.z - en.z);
+        // 面對敵人且在打擊射程內
+        if (dx < 0 && dx > -range && dz < 0.9) {
+          audio.playHit();
+          en.hp -= damage;
+          en.x += playerObj.facing * 0.45; // 擊退效果
+          showDamageFloat(damage, en.x, en.y + 1, en.z);
+
+          // 敵人被打反應
+          en.mesh.material.map = enemySprites.hit;
+          setTimeout(() => {
+            if (en.alive) en.mesh.material.map = enemySprites.idle;
+          }, 150);
+
+          // 敵人陣亡
+          if (en.hp <= 0) {
+            en.alive = false;
+            scene.remove(en.mesh);
+            audio.playCoin();
+            spawnDroppedItem('coin', en.x, en.z);
+            showToast(`💥 打倒【${en.name}】！掉落了文錢！`);
+          }
+        }
+      });
     }
 
-    // 調查 / 互動邏輯 (進入商店或與 NPC 交談)
-    function triggerInteract() {
-      // 若已有對話框開啟，按 E 推進或關閉
+    // E 鍵：優先撿起地上武器/文錢，若無則進入對話
+    function triggerInteractOrPickup() {
       const dialogModal = document.getElementById('dialog-modal');
       if (!dialogModal.classList.contains('hidden')) {
-        openShopView(gameState.currentShopNear.data);
+        if (gameState.currentShopNear) openShopView(gameState.currentShopNear.data);
         return;
       }
 
-      // 檢查附近商店
+      // 檢查附近是否有掉落武器或文錢
+      for (let i = droppedItems.length - 1; i >= 0; i--) {
+        const itm = droppedItems[i];
+        if (!itm.alive) continue;
+        const dist = Math.hypot(playerObj.x - itm.x, playerObj.z - itm.z);
+        if (dist < 1.3) {
+          if (itm.type === 'coin') {
+            audio.playCoin();
+            gameState.gold += 100;
+            updateHUD();
+            showToast('💰 拾起文錢：+100 文！');
+          } else if (itm.type === 'bokken') {
+            audio.playSwing();
+            gameState.heldWeapon = 'bokken';
+            updateHUD();
+            showToast('🗡️ 裝備了【木刀】！攻擊力大增！');
+          }
+          itm.alive = false;
+          scene.remove(itm.mesh);
+          droppedItems.splice(i, 1);
+          return;
+        }
+      }
+
+      // 若手持武器且前方無物品，可按 E 丟擲武器攻擊！
+      if (gameState.heldWeapon) {
+        showToast('拋擲手中武器！');
+        audio.playSwing();
+        spawnDroppedItem(gameState.heldWeapon, playerObj.x + playerObj.facing * 1.5, playerObj.z);
+        gameState.heldWeapon = null;
+        updateHUD();
+        return;
+      }
+
+      // 進入商店交談
       if (gameState.currentShopNear) {
-        audio.playBlip(600, 'square', 0.1);
+        audio.playHit();
         openDialog(gameState.currentShopNear.data);
       }
     }
 
     /* ==========================================================================
-       9. UI 交互系統 (對話框、商品清單、購物車、Toast)
+       7. UI 介面與電商購物車管理
        ========================================================================== */
-    const actionHint = document.getElementById('action-hint');
-    const hintText = document.getElementById('hint-text');
-
     function updateHUD() {
-      document.getElementById('player-gold').innerText = `${gameState.gold.toLocaleString()} 文`;
-      const cartCount = gameState.cart.reduce((sum, item) => sum + item.qty, 0);
-      document.getElementById('cart-badge').innerText = cartCount;
+      document.getElementById('hud-gold').innerText = gameState.gold.toLocaleString();
+      document.getElementById('hud-weapon').innerText = gameState.heldWeapon ? '木刀' : '徒手';
+      document.getElementById('player-hp-bar').style.width = `${(gameState.hp / gameState.maxHp) * 100}%`;
+      document.getElementById('player-hp-text').innerText = gameState.hp;
+      const count = gameState.cart.reduce((s, i) => s + i.qty, 0);
+      document.getElementById('cart-badge').innerText = count;
     }
 
     function showToast(msg) {
-      const toast = document.createElement('div');
-      toast.className = 'nes-box px-4 py-2 bg-black text-yellow-300 text-xs tracking-wider transition-all duration-300';
-      toast.innerText = msg;
-      document.getElementById('toast-container').appendChild(toast);
+      const t = document.createElement('div');
+      t.className = 'fc-box px-3.5 py-1.5 bg-black text-yellow-300 text-xs tracking-wider transition-all duration-200';
+      t.innerText = msg;
+      document.getElementById('toast-container').appendChild(t);
       setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-      }, 3000);
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 300);
+      }, 2500);
     }
 
-    // 對話視窗控制
     function openDialog(shopData) {
-      const dialog = document.getElementById('dialog-modal');
       document.getElementById('dialog-avatar').innerText = shopData.avatar;
       document.getElementById('dialog-speaker').innerText = `【${shopData.name}】${shopData.speaker}`;
       document.getElementById('dialog-content').innerText = shopData.intro;
-      dialog.classList.remove('hidden');
+      document.getElementById('dialog-modal').classList.remove('hidden');
     }
 
     document.getElementById('btn-close-dialog').addEventListener('click', () => {
@@ -920,12 +1213,9 @@
 
     document.getElementById('btn-view-shop-goods').addEventListener('click', () => {
       document.getElementById('dialog-modal').classList.add('hidden');
-      if (gameState.currentShopNear) {
-        openShopView(gameState.currentShopNear.data);
-      }
+      if (gameState.currentShopNear) openShopView(gameState.currentShopNear.data);
     });
 
-    // 商店商品清單控制
     function openShopView(shopData) {
       document.getElementById('shop-icon').innerText = shopData.icon;
       document.getElementById('shop-title').innerText = shopData.name;
@@ -936,21 +1226,19 @@
 
       shopData.items.forEach(item => {
         const card = document.createElement('div');
-        card.className = 'nes-box p-3 bg-neutral-900 flex flex-col justify-between hover:border-yellow-400';
+        card.className = 'fc-box p-3 bg-neutral-950 flex flex-col justify-between hover:border-yellow-400';
         card.innerHTML = `
           <div>
             <div class="flex justify-between items-start">
-              <span class="text-3xl p-2 bg-black border border-gray-700">${item.image}</span>
-              <span class="text-[10px] bg-amber-900 text-yellow-200 px-1.5 py-0.5 border border-amber-600">${item.tag}</span>
+              <span class="text-3xl p-1 bg-black border border-gray-700">${item.image}</span>
+              <span class="text-[10px] bg-amber-900 text-yellow-200 px-1 py-0.5 border border-amber-600">${item.tag}</span>
             </div>
-            <h3 class="font-bold text-sm mt-2 text-white">${item.name}</h3>
-            <p class="text-xs text-gray-400 mt-1 leading-relaxed">${item.desc}</p>
+            <h3 class="font-bold text-xs mt-2 text-white">${item.name}</h3>
+            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${item.desc}</p>
           </div>
-          <div class="mt-4 pt-2 border-t border-gray-700 flex justify-between items-center">
-            <span class="text-yellow-400 font-bold text-sm">${item.price} 文</span>
-            <button class="btn-buy-item nes-btn px-2.5 py-1 text-xs bg-yellow-600 font-bold" data-id="${item.id}">
-              購入 ＋
-            </button>
+          <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center">
+            <span class="text-yellow-400 font-bold text-xs">${item.price} 文</span>
+            <button class="btn-buy-item fc-btn px-2.5 py-1 text-xs bg-yellow-600 font-bold">購入 ＋</button>
           </div>
         `;
 
@@ -962,19 +1250,24 @@
       });
 
       document.getElementById('shop-modal').classList.remove('hidden');
-      audio.playBlip(800, 'square', 0.08);
     }
 
     function addToCart(item) {
-      const existing = gameState.cart.find(i => i.id === item.id);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        gameState.cart.push({ ...item, qty: 1 });
+      // 若是食補道具，即時為玩家恢復體力
+      if (item.healHp) {
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + item.healHp);
+        audio.playCoin();
+        updateHUD();
+        showToast(`體力大恢復！目前體力：${gameState.hp}`);
       }
+
+      const existing = gameState.cart.find(i => i.id === item.id);
+      if (existing) existing.qty += 1;
+      else gameState.cart.push({ ...item, qty: 1 });
+
       audio.playCoin();
       updateHUD();
-      showToast(`已將【${item.name}】放入行囊錢袋！`);
+      showToast(`已將【${item.name}】收入行囊！`);
     }
 
     document.getElementById('btn-close-shop').addEventListener('click', () => {
@@ -986,31 +1279,30 @@
       openCartView();
     });
 
-    // 購物車視窗控制
     function openCartView() {
       const container = document.getElementById('cart-items-list');
       container.innerHTML = '';
 
       if (gameState.cart.length === 0) {
-        container.innerHTML = '<div class="py-12 text-center text-gray-500 text-sm">您的行囊錢袋空空如也，快去各家町屋搜羅好貨吧！</div>';
+        container.innerHTML = '<div class="py-8 text-center text-gray-500">行囊袋空空如也，快去鋪子看看吧！</div>';
       } else {
         gameState.cart.forEach(item => {
           const row = document.createElement('div');
-          row.className = 'py-3 flex justify-between items-center';
+          row.className = 'py-2 flex justify-between items-center';
           row.innerHTML = `
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">${item.image}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">${item.image}</span>
               <div>
-                <div class="font-bold text-sm">${item.name}</div>
-                <div class="text-xs text-gray-400">${item.price} 文 × ${item.qty}</div>
+                <div class="font-bold text-xs">${item.name}</div>
+                <div class="text-[10px] text-gray-400">${item.price} 文 × ${item.qty}</div>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <span class="font-bold text-yellow-300 text-sm">${item.price * item.qty} 文</span>
-              <button class="btn-remove-item nes-btn px-2 py-0.5 text-xs bg-red-800" data-id="${item.id}">✕</button>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-yellow-300 text-xs">${item.price * item.qty} 文</span>
+              <button class="btn-remove fc-btn px-2 py-0.5 text-[10px] bg-red-800">✕</button>
             </div>
           `;
-          row.querySelector('.btn-remove-item').addEventListener('click', () => {
+          row.querySelector('.btn-remove').addEventListener('click', () => {
             gameState.cart = gameState.cart.filter(i => i.id !== item.id);
             openCartView();
             updateHUD();
@@ -1021,11 +1313,10 @@
 
       calculateCartTotal();
       document.getElementById('cart-modal').classList.remove('hidden');
-      audio.playBlip(700, 'square', 0.08);
     }
 
     function calculateCartTotal() {
-      let total = gameState.cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+      let total = gameState.cart.reduce((s, i) => s + i.price * i.qty, 0);
       if (gameState.appliedCoupon === 'EDO88') {
         total = Math.round(total * 0.88);
         document.getElementById('cart-discount-info').classList.remove('hidden');
@@ -1040,40 +1331,30 @@
       const val = document.getElementById('coupon-input').value.trim().toUpperCase();
       if (val === 'EDO88') {
         gameState.appliedCoupon = 'EDO88';
-        audio.playFanfare();
+        audio.playCoin();
         calculateCartTotal();
-        showToast('🎉 密技生效！已套用全單 88 折優惠！');
+        showToast('🎉 密技生效！全單 88 折！');
       } else {
-        audio.playBlip(150, 'sawtooth', 0.2);
-        showToast('❌ 無效的密技代碼');
+        audio.playHit();
+        showToast('❌ 無效密技！');
       }
     });
 
     document.getElementById('btn-checkout').addEventListener('click', () => {
       const total = calculateCartTotal();
-      if (gameState.cart.length === 0) {
-        showToast('錢袋沒有任何商品可交割！');
-        return;
-      }
-      if (gameState.gold < total) {
-        audio.playBlip(120, 'sawtooth', 0.3);
-        showToast('文錢不足！請多打碎街上木箱尋寶！');
-        return;
-      }
+      if (gameState.cart.length === 0) return showToast('行囊無商品！');
+      if (gameState.gold < total) return showToast('文錢不足！請多打倒街道惡徒！');
 
-      // 扣款結帳成功
       gameState.gold -= total;
       gameState.cart = [];
       updateHUD();
       document.getElementById('cart-modal').classList.add('hidden');
-      audio.playFanfare();
-      showToast('🏮 恭喜交割成功！店家已安排飛腳快遞火速送達！');
+      audio.playCoin();
+      showToast('🏮 交割成功！駿河驛站飛腳即日出貨！');
     });
 
     document.getElementById('btn-open-cart').addEventListener('click', openCartView);
-    document.getElementById('btn-close-cart').addEventListener('click', () => {
-      document.getElementById('cart-modal').classList.add('hidden');
-    });
+    document.getElementById('btn-close-cart').addEventListener('click', () => document.getElementById('cart-modal').classList.add('hidden'));
 
     function closeAllModals() {
       document.getElementById('dialog-modal').classList.add('hidden');
@@ -1082,114 +1363,147 @@
     }
 
     /* ==========================================================================
-       10. 遊戲主循環 (Render Loop & Animation)
+       8. 2.5D 主循環引擎 (Physics, Sprite Billboarding, AI)
        ========================================================================== */
-    const playerSpeed = 0.085;
-    let walkCycle = 0;
+    const playerSpeed = 0.088;
+    let walkTicker = 0;
 
     function animate() {
       requestAnimationFrame(animate);
 
       // 玩家移動處理
-      let moveX = 0;
-      let moveZ = 0;
+      let mx = 0;
+      let mz = 0;
+      if (keys.left) { mx -= 1; playerObj.facing = -1; }
+      if (keys.right) { mx += 1; playerObj.facing = 1; }
+      if (keys.up) mz -= 1;
+      if (keys.down) mz += 1;
 
-      if (keys.left) moveX -= 1;
-      if (keys.right) moveX += 1;
-      if (keys.up) moveZ -= 1;
-      if (keys.down) moveZ += 1;
+      const moving = (mx !== 0 || mz !== 0);
 
-      const isMoving = (moveX !== 0 || moveZ !== 0);
-
-      if (isMoving) {
-        // 正規化移動向量
-        const len = Math.hypot(moveX, moveZ);
-        playerGroup.position.x += (moveX / len) * playerSpeed;
-        playerGroup.position.z += (moveZ / len) * playerSpeed;
-
-        // 限制移動範圍 (街道邊界)
-        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -25, 25);
-        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -2.4, 2.2);
-
-        // 面對方向轉向
-        if (moveX !== 0) {
-          playerGroup.scale.x = moveX > 0 ? 1 : -1;
+      if (playerObj.actionTimer > 0) {
+        playerObj.actionTimer--;
+        if (playerObj.actionTimer === 0) {
+          playerObj.action = 'idle';
+          playerMesh.material.map = playerSprites.idle;
         }
-
-        // 雙腿晃動走路動畫 (熱血物語經典踩步)
-        walkCycle += 0.28;
-        legL.position.y = 0.22 + Math.sin(walkCycle) * 0.12;
-        legR.position.y = 0.22 - Math.sin(walkCycle) * 0.12;
-        playerBody.position.y = 0.8 + Math.abs(Math.sin(walkCycle)) * 0.04;
-        playerBandTail.rotation.z = Math.sin(walkCycle) * 0.3;
       } else {
-        // 站立待機微幅呼吸
-        walkCycle += 0.04;
-        playerBody.position.y = 0.8 + Math.sin(walkCycle) * 0.02;
-        legL.position.y = 0.22;
-        legR.position.y = 0.22;
+        if (moving) {
+          walkTicker += 0.25;
+          playerMesh.material.map = Math.sin(walkTicker) > 0 ? playerSprites.walk : playerSprites.idle;
+        } else {
+          playerMesh.material.map = playerSprites.idle;
+        }
       }
 
-      // 相機跟隨玩家（X 軸平滑跟隨，固定 Y、Z 軸維持 2.5D 角度）
-      camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerGroup.position.x, 0.08);
+      if (moving) {
+        const len = Math.hypot(mx, mz);
+        playerObj.x += (mx / len) * playerSpeed;
+        playerObj.z += (mz / len) * playerSpeed;
+        playerObj.x = THREE.MathUtils.clamp(playerObj.x, -28, 28);
+        playerObj.z = THREE.MathUtils.clamp(playerObj.z, -2.4, 2.3);
+      }
 
-      // NPC 巡邏移動
-      npcs.forEach(npc => {
-        npc.group.position.x += npc.speed;
-        if (npc.group.position.x > npc.maxX || npc.group.position.x < npc.minX) {
-          npc.speed = -npc.speed;
+      // 重力與跳躍物理
+      if (!playerObj.isGrounded) {
+        playerObj.y += playerObj.vy;
+        playerObj.vy -= 0.014; // 重力加速度
+        if (playerObj.y <= 0) {
+          playerObj.y = 0;
+          playerObj.vy = 0;
+          playerObj.isGrounded = true;
         }
+      }
+
+      // 鏡像翻轉面對方向
+      playerMesh.scale.x = playerObj.facing;
+      playerMesh.position.set(playerObj.x, 1.0 + playerObj.y, playerObj.z);
+
+      // 相機 2.5D 平滑追隨主角
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerObj.x, 0.09);
+      fujiPlane.position.x = camera.position.x * 0.85; // 遠景視差滾動 (Parallax Scrolling)
+
+      // 敵人 AI 行為（接近主角、巡邏）
+      enemies.forEach(en => {
+        if (!en.alive) return;
+        const dist = Math.hypot(playerObj.x - en.x, playerObj.z - en.z);
+        if (dist < 4.5 && dist > 1.1) {
+          // 主動走近國政
+          const dx = playerObj.x - en.x;
+          const dz = playerObj.z - en.z;
+          en.x += Math.sign(dx) * 0.025;
+          en.z += Math.sign(dz) * 0.015;
+          en.facing = Math.sign(dx) || -1;
+          en.mesh.scale.x = en.facing;
+          en.mesh.material.map = enemySprites.walk;
+        } else if (dist <= 1.1) {
+          // 貼身攻擊玩家
+          en.stateTimer++;
+          if (en.stateTimer % 45 === 0) {
+            audio.playHit();
+            gameState.hp = Math.max(0, gameState.hp - 10);
+            updateHUD();
+            showDamageFloat(10, playerObj.x, playerObj.y, playerObj.z);
+            showToast('遭惡人偷襲！體力減少 10！');
+          }
+        }
+        en.mesh.position.set(en.x, 1.0, en.z);
       });
 
-      // 木箱碎片物理模擬
+      // 掉落物小跳躍物理
+      droppedItems.forEach(itm => {
+        if (!itm.alive) return;
+        if (itm.y > 0.3) {
+          itm.y += itm.vy;
+          itm.vy -= 0.01;
+          if (itm.y <= 0.3) { itm.y = 0.3; itm.vy = 0; }
+        }
+        itm.mesh.position.set(itm.x, itm.y, itm.z);
+      });
+
+      // 碎片飛散
       for (let i = debrisList.length - 1; i >= 0; i--) {
         const d = debrisList[i];
         d.mesh.position.x += d.vx;
         d.mesh.position.y += d.vy;
         d.mesh.position.z += d.vz;
-        d.vy -= 0.01; // 重力
-        d.mesh.rotation.x += 0.1;
+        d.vy -= 0.01;
         d.life--;
-        if (d.mesh.position.y <= 0.1) {
-          d.mesh.position.y = 0.1;
-          d.vy = -d.vy * 0.4;
-        }
         if (d.life <= 0) {
           scene.remove(d.mesh);
           debrisList.splice(i, 1);
         }
       }
 
-      // 檢查玩家與商店距離，觸發提示
+      // 商店進門判定
       let nearShop = null;
       shopsInScene.forEach(shop => {
-        const dist = Math.hypot(playerGroup.position.x - shop.position.x, playerGroup.position.z - shop.position.z);
-        // 驚嘆號上下懸浮旋轉
-        shop.hintMesh.position.y = 4.3 + Math.sin(walkCycle * 2) * 0.15;
-        shop.hintMesh.rotation.y += 0.03;
-
-        if (dist < 2.5) {
-          nearShop = shop;
-        }
+        const dist = Math.hypot(playerObj.x - shop.position.x, playerObj.z - shop.position.z);
+        shop.mark.rotation.y += 0.03;
+        if (dist < 2.4) nearShop = shop;
       });
 
       gameState.currentShopNear = nearShop;
+      const actionHint = document.getElementById('action-hint');
+      const hintText = document.getElementById('hint-text');
+
       if (nearShop) {
         actionHint.style.opacity = '1';
         hintText.innerText = `進入【${nearShop.data.name}】`;
       } else {
-        actionHint.style.opacity = '0';
+        // 檢查是否有掉落物在附近
+        let nearItem = droppedItems.find(it => it.alive && Math.hypot(playerObj.x - it.x, playerObj.z - it.z) < 1.3);
+        if (nearItem) {
+          actionHint.style.opacity = '1';
+          hintText.innerText = nearItem.type === 'coin' ? '拾取文錢' : '拾取木刀武器';
+        } else {
+          actionHint.style.opacity = '0';
+        }
       }
 
       renderer.render(scene, camera);
     }
 
-    // 視窗響應縮放
-    window.addEventListener('resize', () => {
-      // 保持內部解析度不變，透過 CSS 縮放拉伸填滿視窗並維持像素網格
-    });
-
-    // 初始化狀態
     updateHUD();
     animate();
   </script>
