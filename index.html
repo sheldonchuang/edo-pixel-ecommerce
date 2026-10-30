@@ -3,31 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>熱血時代劇 - 1991 FC 正統東海道五十三次 (高精度像素武士篇)</title>
+  <title>熱血時代劇 - 駿河宿場篇 (精緻像素浮世繪風)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Pixel Fonts -->
+  <!-- Google Pixel Fonts (DotGothic16 支援漢字假名，Press Start 2P 支援經典 FC 英數) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start 2P&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
   <style>
     * {
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
     }
-    body, html {
+    body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      background-color: #0c0914;
+      font-family: 'DotGothic16', sans-serif;
       overflow: hidden;
-      background-color: #0c0814;
-      font-family: 'DotGothic16', monospace;
+      color: #ffffff;
     }
     .font-nes {
       font-family: 'Press Start 2P', monospace;
     }
+    /* 核心 16-bit / 高階像素畫布：保持超銳利點陣顆粒感，無任何抗鋸齒模糊 */
     #game-canvas {
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
@@ -38,167 +44,167 @@
       object-fit: cover;
       display: block;
     }
+    /* 經典熱血時代劇黑底白框 HUD */
     .fc-box {
-      background-color: #000000;
-      border: 4px solid #ffffff;
+      background-color: rgba(5, 5, 12, 0.94);
+      border: 3px solid #ffffff;
       box-shadow: 4px 4px 0px #000000;
       position: relative;
     }
     .fc-box::before {
       content: '';
       position: absolute;
-      top: -6px; left: -6px; right: -6px; bottom: -6px;
-      border: 2px solid #000000;
+      top: -5px; left: -5px; right: -5px; bottom: -5px;
+      border: 1.5px solid #000000;
       pointer-events: none;
     }
     .fc-btn {
-      background-color: #1a1728;
-      border: 3px solid #ffffff;
+      background-color: #1a162b;
+      border: 2px solid #ffffff;
       color: #ffffff;
       transition: all 0.05s ease;
       cursor: pointer;
+      box-shadow: 2px 2px 0px #000000;
     }
     .fc-btn:hover {
-      background-color: #b45309;
+      background-color: #ef4444;
       border-color: #fef08a;
     }
     .fc-btn:active {
       transform: translate(2px, 2px);
     }
+    /* 復古 CRT 電視掃描光柵 */
     .crt-scanlines {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.32) 50%);
+      background: linear-gradient(rgba(18, 16, 24, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
       background-size: 100% 4px;
       pointer-events: none;
       z-index: 20;
     }
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .blink {
+      animation: blink 0.7s infinite;
+    }
     @keyframes popIn {
-      0% { transform: scale(0.6); opacity: 0; }
-      80% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
+      0% { transform: scale(0.7) translateY(10px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
     }
-    .pop-in { animation: popIn 0.15s ease-out forwards; }
-    @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-    .blink { animation: blink 0.7s infinite; }
+    .pop-in {
+      animation: popIn 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
   </style>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-      }
-    }
-  </script>
 </head>
-<body class="relative text-white">
+<body class="relative w-screen h-screen overflow-hidden">
 
-  <!-- 3D 渲染畫布容器 -->
-  <div id="canvas-container" class="relative w-full h-full overflow-hidden">
+  <!-- 3D 渲染畫布容器與 CRT 光柵 -->
+  <div class="relative w-full h-full">
     <canvas id="game-canvas"></canvas>
     <div class="crt-scanlines"></div>
   </div>
 
-  <!-- HUD 狀態列 -->
+  <!-- HUD 頂部狀態列 -->
   <div class="absolute top-3 left-3 right-3 flex justify-between items-start pointer-events-none z-30 text-xs">
     <div class="flex flex-col gap-2">
-      <!-- 主角國政頭像與狀態 -->
-      <div class="fc-box p-3 bg-black/95 pointer-events-auto flex flex-col gap-1 min-w-[270px]">
+      <!-- 主角狀態 -->
+      <div class="fc-box p-3 pointer-events-auto flex flex-col gap-1 min-w-[270px]">
         <div class="flex items-center justify-between text-yellow-400 font-bold tracking-wider">
           <span class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 bg-red-600 inline-block border border-white"></span>
-            【駿河】くにまさ (國政)
+            【天下無雙】國政 (Kunimasa)
           </span>
-          <span class="text-[10px] bg-red-700 text-white px-1.5 py-0.5 border border-white">熱血浪人</span>
+          <span class="font-nes text-[10px] text-emerald-300">LV.99</span>
         </div>
         <div class="flex items-center gap-2 mt-1">
-          <span class="text-red-400 font-bold">體力</span>
-          <div class="w-36 h-3.5 bg-neutral-900 border-2 border-white relative overflow-hidden">
-            <div id="player-hp-bar" class="h-full bg-gradient-to-r from-red-600 to-amber-400 w-full transition-all duration-150"></div>
+          <span class="text-white font-bold text-[11px]">體力:</span>
+          <div class="flex-1 bg-gray-900 h-4 border-2 border-white relative overflow-hidden">
+            <div id="player-hp-bar" class="h-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 transition-all duration-150" style="width: 100%;"></div>
+            <span id="player-hp-text" class="absolute inset-0 flex items-center justify-center font-nes text-[9px] text-white font-bold drop-shadow">150/150</span>
           </div>
-          <span id="player-hp-text" class="text-yellow-300 font-bold text-[11px]">150/150</span>
         </div>
         <div class="flex items-center justify-between mt-1 pt-1 border-t border-dashed border-gray-700">
           <span class="text-emerald-400 font-bold">所持金：<span id="hud-gold" class="text-yellow-300 font-nes">1,500</span> 文</span>
-          <span class="text-purple-300">武器：<span id="hud-weapon" class="text-white font-bold">徒手</span></span>
+          <span class="text-purple-300">武器：<span id="hud-weapon" class="text-white font-bold">腰間佩刀・徒手</span></span>
         </div>
       </div>
 
-      <!-- 敵情戰況公告 -->
+      <!-- 敵情告示 -->
       <div id="gang-alert" class="fc-box px-3 py-1 bg-red-950/90 text-yellow-300 text-[11px] font-bold border-red-500 pointer-events-auto flex items-center justify-between">
-        <span>⚔️ 惡黨浪人鬧市：編笠浪士・捻鉢頭目</span>
+        <span>🌸 駿河宿場町・惡黨橫行中</span>
         <span>已懲戒：<span id="kill-count" class="text-white font-nes">0</span> 人</span>
       </div>
     </div>
 
     <!-- 右上快捷按鈕 -->
     <div class="flex items-center gap-2 pointer-events-auto">
-      <button id="btn-open-cart" class="fc-box p-2.5 bg-black/95 flex items-center gap-2 hover:border-yellow-400 cursor-pointer">
+      <button id="btn-open-cart" class="fc-box p-2.5 flex items-center gap-2 hover:border-yellow-400 cursor-pointer">
         <span class="text-base">🛍️</span>
         <span class="font-bold text-xs">行囊錢袋</span>
         <span id="cart-badge" class="bg-red-600 text-white font-bold text-[10px] px-1.5 py-0.2 border border-white">0</span>
       </button>
 
-      <button id="btn-toggle-bgm" class="fc-box px-3 py-2.5 bg-black/95 text-xs hover:border-yellow-400 cursor-pointer font-bold text-yellow-400" title="切換 FC 時代劇原汁原味配樂">
+      <button id="btn-toggle-bgm" class="fc-box px-3 py-2.5 text-xs hover:border-yellow-400 cursor-pointer font-bold text-yellow-400" title="切換 FC 時代劇原汁原味配樂">
         🎵 BGM:開
       </button>
-      <button id="btn-toggle-sfx" class="fc-box px-3 py-2.5 bg-black/95 text-xs hover:border-yellow-400 cursor-pointer font-bold">
+      <button id="btn-toggle-sfx" class="fc-box px-3 py-2.5 text-xs hover:border-yellow-400 cursor-pointer font-bold">
         🔊 音效
       </button>
     </div>
   </div>
 
-  <!-- 調查 / 拾取提示 -->
-  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-30">
-    <div id="action-hint" class="fc-box px-4 py-2 bg-black/95 text-xs flex items-center gap-2 opacity-0 transition-opacity duration-150">
-      <span class="px-1.5 py-0.5 bg-yellow-400 text-black font-bold text-[11px] border border-black font-nes">E</span>
-      <span id="hint-text" class="text-yellow-200 font-bold tracking-wider">調查</span>
-    </div>
-  </div>
-
-  <!-- 出招奧義面板 -->
-  <div class="hidden md:block absolute bottom-3 left-3 z-20 pointer-events-none opacity-90 text-xs text-gray-200 fc-box p-3 bg-black/95 max-w-md">
-    <div class="text-yellow-400 font-bold mb-1 flex items-center justify-between">
-      <span>⚔️【熱血時代劇 武士招式秘傳】</span>
-      <span class="text-[10px] text-gray-400">TECHNŌS 1991</span>
-    </div>
-    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-      <div>街道走位：<span class="text-white font-bold">W A S D</span></div>
-      <div>側身急速衝刺：<span class="text-yellow-300 font-bold">雙擊 A/D</span> 或 <span class="text-yellow-300 font-bold">Shift</span></div>
-      <div>跳躍：<span class="text-white font-bold">Space</span>（空中可橫踢）</div>
-      <div>正宗直拳：<span class="text-white font-bold">J</span> 鍵（連續出拳擊退）</div>
-      <div>側面橫飛踢：<span class="text-white font-bold">K</span> 鍵（強力擊飛）</div>
-      <div>衝刺重擊：<span class="text-yellow-300 font-bold">衝刺中按 J / K</span></div>
-      <div>奧義【馬赫拳】：<span class="text-amber-400 font-bold">L</span> 鍵（高速側身連拳殘像）</div>
-      <div>拾取/投擲武器：<span class="text-white font-bold">E</span> 鍵（撿木刀、木箱、文錢）</div>
-    </div>
-    <div class="mt-1.5 text-[10px] text-emerald-400 border-t border-dashed border-gray-700 pt-1">
-      💡 人物全面依據原版立繪細節重製：國政硬派飛揚髮髻、編笠深笠浪士、裹胸布頭巾無賴！
-    </div>
-  </div>
-
-  <!-- 手機觸控按鍵 -->
-  <div class="absolute bottom-4 left-4 z-30 flex flex-col items-center pointer-events-auto md:hidden opacity-90">
-    <div class="grid grid-cols-3 gap-1 w-28 h-28">
-      <div></div><button id="vkey-up" class="fc-btn text-xs font-bold py-1.5">▲</button><div></div>
-      <button id="vkey-left" class="fc-btn text-xs font-bold py-1.5">◀</button>
-      <div class="bg-black/60 border border-white/30"></div>
-      <button id="vkey-right" class="fc-btn text-xs font-bold py-1.5">▶</button>
-      <div></div><button id="vkey-down" class="fc-btn text-xs font-bold py-1.5">▼</button><div></div>
-    </div>
-  </div>
-
-  <div class="absolute bottom-4 right-4 z-30 flex items-center gap-2 pointer-events-auto md:hidden opacity-90">
-    <div class="flex flex-col gap-2">
-      <div class="flex gap-2">
-        <button id="vkey-dash" class="fc-btn w-12 h-12 rounded-full bg-yellow-700 text-[10px] font-bold">衝刺<br>Dash</button>
-        <button id="vkey-mach" class="fc-btn w-12 h-12 rounded-full bg-amber-700 text-[10px] font-bold">奧義<br>馬赫</button>
-        <button id="vkey-action" class="fc-btn w-12 h-12 rounded-full bg-emerald-700 text-[10px] font-bold">E<br>拾/丟</button>
+  <!-- 底部操作出招說明 -->
+  <div class="absolute bottom-3 left-3 pointer-events-none z-30 hidden md:block">
+    <div class="fc-box px-3 py-2 text-[11px] bg-black/90 text-gray-200 flex flex-col gap-1">
+      <div class="text-yellow-400 font-bold flex items-center gap-2">
+        <span>🎮 正統熱血時代劇奧義指引：</span>
+        <span class="text-red-400">連續雙擊左右 [A][A] / [D][D] ＝ 破陣疾走(Dash)！</span>
       </div>
-      <div class="flex gap-2 justify-end">
-        <button id="vkey-punch" class="fc-btn w-14 h-14 rounded-full bg-red-700 text-xs font-bold">J<br>拳</button>
-        <button id="vkey-kick" class="fc-btn w-14 h-14 rounded-full bg-blue-700 text-xs font-bold">K<br>踢</button>
-        <button id="vkey-jump" class="fc-btn w-14 h-14 rounded-full bg-purple-700 text-xs font-bold">跳<br>Space</button>
+      <div class="flex items-center gap-3 text-gray-300">
+        <span>方向鍵/WASD: 走動</span>
+        <span class="text-yellow-300 font-bold">[J]: 正拳</span>
+        <span class="text-sky-300 font-bold">[K]: 飛踢</span>
+        <span class="text-amber-300 font-bold">[L]: 奧義馬赫拳</span>
+        <span class="text-emerald-300 font-bold">[空白鍵]: 跳躍</span>
+        <span class="text-purple-300 font-bold">[E]: 拾取武器/投擲/進店</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 互動進店/拾取提示 (按 E) -->
+  <div id="action-hint" class="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 opacity-0 transition-opacity duration-200">
+    <div class="fc-box px-4 py-2 bg-yellow-950/95 text-yellow-300 text-xs font-bold border-yellow-400 flex items-center gap-2 shadow-lg">
+      <span class="w-2.5 h-2.5 bg-yellow-400 animate-ping inline-block rounded-full"></span>
+      <span id="hint-text">按 [E] 鍵互動</span>
+    </div>
+  </div>
+
+  <!-- 手機虛擬按鍵 -->
+  <div class="absolute inset-0 pointer-events-none z-30 flex flex-col justify-between p-4 md:hidden">
+    <div></div>
+    <div class="flex justify-between items-end pointer-events-auto">
+      <div class="flex flex-col items-center gap-1">
+        <button id="vkey-up" class="fc-btn w-11 h-11 flex items-center justify-center font-bold text-sm">▲</button>
+        <div class="flex gap-2">
+          <button id="vkey-left" class="fc-btn w-11 h-11 flex items-center justify-center font-bold text-sm">◀</button>
+          <button id="vkey-dash" class="fc-btn w-11 h-11 flex items-center justify-center font-bold text-[10px] bg-amber-700">疾走</button>
+          <button id="vkey-right" class="fc-btn w-11 h-11 flex items-center justify-center font-bold text-sm">▶</button>
+        </div>
+        <button id="vkey-down" class="fc-btn w-11 h-11 flex items-center justify-center font-bold text-sm">▼</button>
+      </div>
+
+      <div class="flex flex-col gap-2 items-end">
+        <div class="flex gap-2">
+          <button id="vkey-mach" class="fc-btn w-12 h-12 rounded-full bg-amber-600 text-[10px] font-bold">奧義<br>馬赫</button>
+          <button id="vkey-action" class="fc-btn w-12 h-12 rounded-full bg-emerald-700 text-xs font-bold">拾取<br>E</button>
+        </div>
+        <div class="flex gap-2">
+          <button id="vkey-punch" class="fc-btn w-13 h-13 rounded-full bg-red-700 text-xs font-bold">J<br>拳</button>
+          <button id="vkey-kick" class="fc-btn w-13 h-13 rounded-full bg-blue-700 text-xs font-bold">K<br>踢</button>
+          <button id="vkey-jump" class="fc-btn w-13 h-13 rounded-full bg-purple-700 text-xs font-bold">跳<br>Space</button>
+        </div>
       </div>
     </div>
   </div>
@@ -234,7 +240,7 @@
         <div class="flex items-center gap-2">
           <span id="shop-icon" class="text-2xl">🌾</span>
           <div>
-            <h2 id="shop-title" class="text-base font-bold text-yellow-400">越後屋糧鋪</h2>
+            <h2 id="shop-title" class="text-base font-bold text-yellow-400">越後屋米糧鋪</h2>
             <p id="shop-subtitle" class="text-[11px] text-gray-400">傳承百年之關東第一逸品</p>
           </div>
         </div>
@@ -318,9 +324,9 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.setValueAtTime(280, now);
         osc.frequency.exponentialRampToValueAtTime(45, now + 0.1);
-        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.setValueAtTime(0.32, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
         osc.connect(gain); gain.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.1);
@@ -333,12 +339,12 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(420, now);
-        osc.frequency.exponentialRampToValueAtTime(80, now + 0.14);
-        gain.gain.setValueAtTime(0.26, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(75, now + 0.15);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
         osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.14);
+        osc.start(now); osc.stop(now + 0.15);
       }
 
       playSwing() {
@@ -348,12 +354,27 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(200, now);
-        osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
-        gain.gain.setValueAtTime(0.18, now);
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
         osc.connect(gain); gain.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.08);
+      }
+
+      playMachPunch() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.07);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.07);
       }
 
       playJump() {
@@ -363,43 +384,12 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(140, now);
-        osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
-        gain.gain.setValueAtTime(0.14, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(480, now + 0.15);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
         osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.12);
-      }
-
-      playMachPunch() {
-        if (!this.sfxEnabled) return;
-        this.init();
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(520, now);
-        osc.frequency.exponentialRampToValueAtTime(140, now + 0.05);
-        gain.gain.setValueAtTime(0.22, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.05);
-      }
-
-      playEnemyDown() {
-        if (!this.sfxEnabled) return;
-        this.init();
-        const now = this.ctx.currentTime;
-        [300, 240, 180, 120].forEach((freq, idx) => {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-          gain.gain.setValueAtTime(0.15, now + idx * 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.05 + 0.06);
-          osc.connect(gain); gain.connect(this.ctx.destination);
-          osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.06);
-        });
+        osc.start(now); osc.stop(now + 0.15);
       }
 
       playCoin() {
@@ -411,33 +401,48 @@
         osc.type = 'square';
         osc.frequency.setValueAtTime(987.77, now);
         osc.frequency.setValueAtTime(1318.51, now + 0.07);
-        gain.gain.setValueAtTime(0.16, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
         osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.28);
+        osc.start(now); osc.stop(now + 0.22);
+      }
+
+      playEnemyDown() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.35);
       }
 
       startBGM() {
-        if (!this.bgmEnabled) return;
+        if (!this.bgmEnabled || this.bgmTimer) return;
         this.init();
-        if (this.bgmTimer) return;
-
         const melody = [
-          293.66, 0, 293.66, 349.23, 440.00, 440.00, 392.00, 349.23,
-          293.66, 0, 293.66, 261.63, 293.66, 349.23, 392.00, 0,
-          440.00, 523.25, 587.33, 587.33, 523.25, 440.00, 392.00, 349.23,
-          440.00, 392.00, 349.23, 329.63, 293.66, 293.66, 0, 0
+          392, 392, 440, 523.25, 440, 392, 329.63, 293.66,
+          329.63, 392, 440, 523.25, 587.33, 523.25, 440, 0,
+          523.25, 587.33, 659.25, 587.33, 523.25, 440, 392, 329.63,
+          392, 440, 392, 329.63, 293.66, 261.63, 293.66, 0
         ];
         const bassline = [
-          146.83, 146.83, 174.61, 146.83, 220.00, 196.00, 174.61, 146.83,
-          146.83, 146.83, 130.81, 146.83, 174.61, 196.00, 146.83, 146.83
+          130.81, 130.81, 146.83, 164.81, 130.81, 130.81, 98.00, 98.00,
+          110.00, 110.00, 146.83, 164.81, 146.83, 130.81, 110.00, 98.00,
+          130.81, 146.83, 164.81, 146.83, 130.81, 110.00, 98.00, 98.00,
+          110.00, 110.00, 98.00, 98.00, 73.42, 65.41, 73.42, 98.00
         ];
 
         this.bgmTimer = setInterval(() => {
           if (!this.bgmEnabled || !this.ctx) return;
           const now = this.ctx.currentTime;
           const note = melody[this.bgmStep % melody.length];
-          const bass = bassline[Math.floor(this.bgmStep / 2) % bassline.length];
+          const bass = bassline[this.bgmStep % bassline.length];
 
           if (note > 0) {
             const osc = this.ctx.createOscillator();
@@ -565,346 +570,429 @@
     }
 
     /* ==========================================================================
-       3. 角色高細節造型產生器 (五種完全獨立特色造型，徹底告別同模換色與呆滯感)
+       3. 精緻角色像素生成 (48x54 高精度規格，英氣側臉、深淺明暗、佩刀與生動眼神)
        ========================================================================== */
-
-    // 1. 主角【くにまさ (國政)】：正統熱血飛揚瀏海髮髻、銳利眼神、純白羽織
+    // 主角【國政】(Kunimasa - 熱血時代劇主角)
     function drawKunimasa(ctx, action) {
-      const W = 36, H = 40;
-      // 腳底陰影
+      const W = 48, H = 54;
+      // 圓形立體軟陰影
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.beginPath(); ctx.ellipse(18, 38, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(24, 51, 14, 3.5, 0, 0, Math.PI * 2); ctx.fill();
 
+      // 被擊倒倒地狀態 (Down / KO)
       if (action === 'down') {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(6, 30, 22, 7);
-        ctx.fillStyle = '#1e1b2e'; ctx.fillRect(2, 28, 7, 9);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(8, 28, 8, 8);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(10, 30, 4, 3);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(26, 30, 4, 7);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(10, 42, 28, 8);
+        ctx.fillStyle = '#1e1b2e'; ctx.fillRect(4, 38, 9, 11);
+        ctx.fillStyle = '#ffcca3'; ctx.fillRect(12, 38, 10, 10);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(36, 42, 5, 8);
+        // 暈眩小星星
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(8, 30, 3, 3); ctx.fillRect(16, 28, 4, 3); ctx.fillRect(24, 31, 3, 3);
         return;
       }
 
-      // 國政招牌髮型：前額銳利突起怒髮 + 後束武士沖天髮髻 + 鮮紅綁繩
-      ctx.fillStyle = '#17141f';
-      ctx.fillRect(9, 6, 14, 9);
-      ctx.fillRect(18, 5, 6, 5); // 額前揚髮
-      ctx.fillRect(7, 2, 7, 5);  // 後仰髮髻
-      ctx.fillStyle = '#dc2626'; // 鮮紅髮繩
-      ctx.fillRect(10, 3, 4, 3);
-      // 頭帶飄帶尾巴向後揚起
-      ctx.fillRect(4, 3, 6, 2);
+      // 1. 烏黑怒髮武士髻 + 鮮紅束帶飄揚
+      ctx.fillStyle = '#100e1c'; // 髮絲基底黑
+      ctx.fillRect(14, 6, 17, 12);
+      ctx.fillRect(24, 5, 8, 6);   // 霸氣揚額前瀏海
+      ctx.fillRect(11, 2, 9, 6);   // 沖天後梳髮髻
+      ctx.fillStyle = '#1e293b';   // 髮絲中調灰藍
+      ctx.fillRect(16, 7, 12, 4); ctx.fillRect(26, 6, 4, 3);
+      ctx.fillStyle = '#475569';   // 髮絲高光
+      ctx.fillRect(17, 7, 5, 1);
 
-      // 側臉肌膚 (有明暗陰影)
-      ctx.fillStyle = '#ffcca3';
-      ctx.fillRect(12, 10, 11, 10);
-      ctx.fillRect(22, 14, 2, 3); // 挺拔鼻樑
-      ctx.fillStyle = '#e29d78';
-      ctx.fillRect(12, 18, 11, 2); // 剛毅下巴陰影
+      // 鮮紅髮帶與飄動緞帶
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(14, 3, 5, 3);
+      ctx.fillRect(7, 4, 8, 2);    // 迎風飄帶
+      ctx.fillStyle = '#f87171'; ctx.fillRect(14, 3, 4, 1);
+
+      // 2. 剛毅側臉 (正統熱血時代劇劍眉星目、立體挺鼻、堅定抿唇)
+      ctx.fillStyle = '#fed7aa';   // 臉部暖膚色
+      ctx.fillRect(16, 12, 14, 13);
+      ctx.fillRect(30, 16, 3, 4);  // 挺拔鼻樑
+      ctx.fillStyle = '#c27850';   // 側頰陰影與下顎折痕
+      ctx.fillRect(16, 22, 14, 3);
+      ctx.fillStyle = '#7c2d12';   // 輪廓修飾線
+      ctx.fillRect(29, 23, 2, 2);
 
       if (action === 'hurt') {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(16, 10, 5, 5);
-        ctx.fillStyle = '#000000'; ctx.fillRect(19, 12, 2, 2);
-        ctx.fillStyle = '#831843'; ctx.fillRect(19, 16, 4, 4);
+        // 受創表情：經典熱血「ぐはっ」白眼驚恐、張嘴大叫
+        ctx.fillStyle = '#000000'; ctx.fillRect(20, 13, 8, 2);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(21, 15, 6, 5);
+        ctx.fillStyle = '#000000'; ctx.fillRect(24, 16, 2, 2);
+        ctx.fillStyle = '#7f1d1d'; ctx.fillRect(24, 21, 6, 4); // 張嘴大叫
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(25, 21, 4, 1); // 門牙
       } else {
-        // 銳利剛烈眼神 (粗黑劍眉 + 堅毅白目眼 + 側眼珠)
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(15, 11, 7, 2); // 凌厲劍眉
+        // 炯炯有神英氣眼神：劍眉、細長銳利眼眸、聚焦黑瞳、晶亮高光！
+        ctx.fillStyle = '#0f0d1a';
+        ctx.fillRect(21, 13, 9, 2); // 凌厲劍眉
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(16, 13, 4, 4); // 炯炯有神
+        ctx.fillRect(22, 15, 6, 3); // 細長銳利眼眶 (非呆滯大圓眼)
         ctx.fillStyle = '#000000';
-        ctx.fillRect(18, 14, 2, 2); // 黑眼珠
+        ctx.fillRect(24, 15, 3, 3); // 聚焦黑瞳
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, 15, 1, 1); // 眼神精準高光
+        ctx.fillStyle = '#c27850';
+        ctx.fillRect(22, 18, 6, 1); // 臥蠶陰影
         ctx.fillStyle = '#713f12';
-        ctx.fillRect(18, 18, 4, 1); // 緊抿嘴角
+        ctx.fillRect(25, 21, 5, 2); // 堅毅閉嘴刀刃線
       }
 
-      // 純白羽織和服 (有深淺灰摺痕)
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(10, 20, 14, 11);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(10, 27, 14, 3); // 衣服下擺折痕
-      // V 領胸膛露出古銅胸肌
-      ctx.fillStyle = '#ffcca3';
-      ctx.fillRect(20, 20, 3, 4);
+      // 3. 純白和服羽織 (白衣勝雪，帶灰藍衣褶陰影與胸肌)
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(14, 25, 17, 14);
+      ctx.fillStyle = '#cbd5e1';   // 衣褶中調
+      ctx.fillRect(14, 34, 17, 4);
+      ctx.fillStyle = '#94a3b8';   // 最深處陰影
+      ctx.fillRect(14, 36, 17, 2);
+      ctx.fillStyle = '#1e3a8a';   // 深藍半襟領緣
+      ctx.fillRect(23, 25, 3, 7);
+      ctx.fillStyle = '#fed7aa';   // 結實開襟胸肌
+      ctx.fillRect(26, 25, 4, 6);
+      ctx.fillStyle = '#c27850'; ctx.fillRect(26, 29, 4, 2);
 
-      // 靛藍腰帶 (Obi)
-      ctx.fillStyle = '#1e3a8a';
-      ctx.fillRect(11, 25, 12, 3);
-      ctx.fillRect(9, 26, 3, 4); // 腰側垂結
+      // 4. 腰間佩刀 (Katana) 打刀黑漆鞘、金刀鐔與白柄捲
+      ctx.fillStyle = '#18181b';   // 漆黑刀鞘
+      ctx.fillRect(8, 30, 18, 3);
+      ctx.fillStyle = '#4b5563'; ctx.fillRect(10, 30, 14, 1); // 鞘身反光
+      ctx.fillStyle = '#facc15';   // 純金刀鐔 (Tsuba)
+      ctx.fillRect(7, 29, 2, 5);
+      ctx.fillStyle = '#ffffff';   // 白柄捲刀柄
+      ctx.fillRect(2, 29, 6, 3);
+      ctx.fillStyle = '#0f0d1a';   // 刀柄菱形纏繩紋
+      ctx.fillRect(3, 30, 1, 1); ctx.fillRect(5, 30, 1, 1);
+      ctx.fillStyle = '#facc15';   // 刀柄首金飾 (Kashira)
+      ctx.fillRect(1, 29, 1, 3);
 
-      // 手臂動作
-      ctx.fillStyle = '#ffffff';
+      // 5. 靛青大腰帶 (Obi)
+      ctx.fillStyle = '#1d4ed8';
+      ctx.fillRect(14, 31, 15, 4);
+      ctx.fillStyle = '#3b82f6'; ctx.fillRect(14, 31, 15, 1); // 腰帶反光
+
+      // 6. 出招手臂與拳腳
+      ctx.fillStyle = '#f8fafc';
       if (action === 'punch') {
-        ctx.fillRect(19, 20, 10, 5);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(28, 19, 5, 6);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(32, 20, 3, 4); // 拳風衝擊波
-      } else if (action === 'mach') {
+        ctx.fillRect(25, 25, 14, 6);
+        ctx.fillStyle = '#fed7aa'; ctx.fillRect(37, 24, 6, 8);
+        ctx.fillStyle = '#c27850'; ctx.fillRect(39, 27, 4, 2);
+        // 白熾正拳衝擊風壓波
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.fillRect(21, 17, 9, 4); ctx.fillRect(25, 21, 10, 4); ctx.fillRect(21, 25, 9, 4);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(33, 20, 3, 5);
+        ctx.fillRect(42, 23, 5, 10); ctx.fillRect(47, 25, 3, 6);
+      } else if (action === 'mach') {
+        // 馬赫拳多重拳影殘像
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillRect(26, 20, 13, 5); ctx.fillRect(33, 25, 14, 5); ctx.fillRect(27, 30, 12, 5);
+        ctx.fillStyle = '#fed7aa';
+        ctx.fillRect(44, 24, 5, 7); ctx.fillRect(38, 19, 4, 6); ctx.fillRect(38, 29, 4, 6);
+        // 奧義金光火花
+        ctx.fillStyle = '#fde047'; ctx.fillRect(46, 21, 2, 2); ctx.fillRect(47, 32, 2, 2);
       } else if (action === 'kick') {
-        ctx.fillRect(8, 21, 5, 5);
+        ctx.fillRect(11, 26, 6, 6);
+        ctx.fillStyle = '#fed7aa'; ctx.fillRect(9, 29, 4, 4);
       } else {
-        ctx.fillRect(16, 21, 4, 7);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(16, 27, 3, 3);
+        ctx.fillRect(21, 26, 5, 9);
+        ctx.fillStyle = '#fed7aa'; ctx.fillRect(21, 34, 4, 4);
       }
 
-      // 下半身雙腿與木屐
-      ctx.fillStyle = '#ffcca3';
+      // 7. 雙腿與木屐 (Geta)
+      ctx.fillStyle = '#fed7aa';
       if (action === 'kick') {
-        ctx.fillRect(9, 29, 4, 7);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(8, 35, 5, 3);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(15, 25, 14, 5);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(28, 24, 5, 7);
+        // 支撐腿
+        ctx.fillRect(12, 38, 5, 9);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(11, 46, 6, 4);
+        // 霸氣凌空側飛踢！
+        ctx.fillStyle = '#fed7aa'; ctx.fillRect(20, 32, 20, 6);
+        ctx.fillStyle = '#f8fafc'; ctx.fillRect(34, 32, 4, 6); // 白足袋
+        ctx.fillStyle = '#78350f'; ctx.fillRect(38, 30, 6, 10); // 巨大木屐底面
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(39, 34, 2, 2);  // 紅鼻緒
       } else if (action === 'walk') {
-        ctx.fillRect(9, 29, 4, 7); ctx.fillRect(17, 28, 4, 8);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(8, 35, 5, 3); ctx.fillRect(17, 35, 5, 3);
+        ctx.fillRect(12, 38, 5, 9); ctx.fillRect(22, 37, 5, 10);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(11, 46, 6, 4); ctx.fillRect(22, 46, 6, 4);
       } else {
-        ctx.fillRect(11, 29, 4, 7); ctx.fillRect(16, 29, 4, 7);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(10, 35, 5, 3); ctx.fillRect(16, 35, 5, 3);
+        ctx.fillRect(14, 38, 5, 9); ctx.fillRect(21, 38, 5, 9);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(13, 46, 6, 4); ctx.fillRect(21, 46, 6, 4);
       }
     }
 
-    // 2. 敵人【深編笠 浪士 (Ronin)】：戴著巨大的江戶浪人竹編深笠，笠沿下透出單眼殺氣
+    // 浪人深笠刺客 (Ronin Kasa Assassin)
     function drawRoninKasa(ctx, action) {
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.beginPath(); ctx.ellipse(18, 38, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(24, 51, 14, 3.5, 0, 0, Math.PI * 2); ctx.fill();
 
       if (action === 'down') {
-        ctx.fillStyle = '#581c87'; ctx.fillRect(6, 30, 22, 7);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(2, 26, 12, 10); // 編笠掉在一旁
+        ctx.fillStyle = '#3b0764'; ctx.fillRect(8, 42, 28, 8);
+        ctx.fillStyle = '#a16207'; ctx.fillRect(2, 36, 16, 12);
         return;
       }
 
-      // 浪人深編笠 (巨大的斗笠罩住大半臉面)
-      ctx.fillStyle = '#a16207'; // 篾竹編紋
-      ctx.beginPath();
-      ctx.moveTo(18, 3); ctx.lineTo(31, 14); ctx.lineTo(4, 14);
-      ctx.fill();
-      ctx.fillStyle = '#713f12'; // 斗笠紋理
-      ctx.fillRect(5, 13, 26, 2);
-      ctx.fillRect(10, 8, 16, 2);
-
-      // 斗笠陰影籠罩下的冷酷臉龐
-      ctx.fillStyle = '#1e1b2e'; // 暗影
-      ctx.fillRect(11, 14, 13, 6);
-      ctx.fillStyle = '#ffcca3';
-      ctx.fillRect(13, 16, 10, 5);
-
-      if (action === 'hurt') {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(16, 14, 5, 5);
-        ctx.fillStyle = '#000000'; ctx.fillRect(18, 15, 2, 2);
-      } else {
-        // 笠沿陰影下閃爍的單眼凶光
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(17, 15, 4, 3);
-        ctx.fillStyle = '#000000'; ctx.fillRect(19, 15, 2, 2);
-        // 嘴裡叼著的稻草籤
-        ctx.fillStyle = '#fde047'; ctx.fillRect(21, 19, 5, 1);
+      // 精緻竹編深笠 (網代笠 / 浪人笠)
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath(); ctx.moveTo(24, 3); ctx.lineTo(43, 18); ctx.lineTo(4, 18); ctx.fill();
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(6, 16, 35, 3); ctx.fillRect(12, 10, 23, 3);
+      // 竹編斜向紋理
+      ctx.fillStyle = '#78350f';
+      for (let x = 8; x <= 38; x += 4) {
+        ctx.fillRect(x, 14, 1, 4);
       }
 
-      // 深紫浪人破袍 (紫黑色調，袖口有綁帶)
-      ctx.fillStyle = '#581c87';
-      ctx.fillRect(9, 20, 15, 11);
-      ctx.fillStyle = '#3b0764';
-      ctx.fillRect(9, 27, 15, 3);
+      // 笠沿深邃暗影（完全遮蔽額頭，露出一抹殺氣血紅眸光）
+      ctx.fillStyle = '#0f0a1c';
+      ctx.fillRect(14, 18, 17, 7);
+      ctx.fillStyle = '#fed7aa'; ctx.fillRect(17, 21, 13, 6);
+      // 猩紅肅殺單眸 + 紅色殘芒
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(23, 20, 3, 2);
+      ctx.fillStyle = '#fca5a5'; ctx.fillRect(24, 20, 1, 1);
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.5)'; ctx.fillRect(26, 20, 2, 1);
+      // 嘴角叼細草籤
+      ctx.fillStyle = '#fde047'; ctx.fillRect(27, 24, 7, 1);
 
-      // 褐色束繩腰帶
-      ctx.fillStyle = '#ca8a04';
-      ctx.fillRect(10, 24, 13, 3);
+      // 破舊深紫武士羽織 + 蓑衣邊綴
+      ctx.fillStyle = '#4c1d95';
+      ctx.fillRect(12, 25, 19, 14);
+      ctx.fillStyle = '#2e1065';
+      ctx.fillRect(12, 34, 19, 5);
+      ctx.fillStyle = '#78350f'; // 粗草繩腰帶
+      ctx.fillRect(13, 31, 17, 4);
+      // 腰間雙刀剪影
+      ctx.fillStyle = '#1c1917'; ctx.fillRect(7, 30, 9, 3);
 
-      // 手臂
-      ctx.fillStyle = '#581c87';
+      ctx.fillStyle = '#4c1d95';
       if (action === 'punch') {
-        ctx.fillRect(19, 20, 10, 5);
-        ctx.fillStyle = '#ffcca3'; ctx.fillRect(28, 19, 5, 6);
+        ctx.fillRect(25, 26, 13, 6);
+        ctx.fillStyle = '#fed7aa'; ctx.fillRect(36, 25, 6, 7);
       } else {
-        ctx.fillRect(15, 21, 4, 7);
+        ctx.fillRect(20, 27, 5, 9);
       }
 
-      // 腳著草鞋 (Waraji)
-      ctx.fillStyle = '#ffcca3';
-      ctx.fillRect(11, 29, 4, 7); ctx.fillRect(16, 29, 4, 7);
-      ctx.fillStyle = '#a16207';
-      ctx.fillRect(10, 35, 5, 3); ctx.fillRect(16, 35, 5, 3);
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(14, 39, 5, 8); ctx.fillRect(21, 39, 5, 8);
+      ctx.fillStyle = '#a16207'; // 草鞋
+      ctx.fillRect(13, 46, 6, 4); ctx.fillRect(21, 46, 6, 4);
     }
 
-    // 3. 敵人【關東無賴 (Thug)】：額綁扭繩頭巾 (捻り鉢巻)、袒胸露肉裹胸布、刺蝟短髮
+    // 關東頭巾混混 (Kanto Thug Brawler)
     function drawKantoThug(ctx, action) {
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.beginPath(); ctx.ellipse(18, 38, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(24, 51, 14, 3.5, 0, 0, Math.PI * 2); ctx.fill();
 
       if (action === 'down') {
-        ctx.fillStyle = '#0369a1'; ctx.fillRect(6, 30, 22, 7);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(8, 28, 6, 4); // 頭巾
+        ctx.fillStyle = '#0284c7'; ctx.fillRect(8, 42, 28, 8);
         return;
       }
 
-      // 刺蝟短髮
+      // 刺蝟短髮 (不良少年寸頭)
       ctx.fillStyle = '#18181b';
-      ctx.fillRect(9, 5, 13, 7);
-      ctx.fillRect(8, 4, 4, 3); ctx.fillRect(15, 3, 4, 3);
+      ctx.fillRect(12, 6, 17, 9);
+      ctx.fillRect(10, 5, 5, 4); ctx.fillRect(20, 4, 5, 4);
 
-      // 額前扭繩頭巾 (白紅捻り鉢巻，前方打大結)
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(9, 10, 14, 3);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(12, 10, 3, 3); ctx.fillRect(18, 10, 3, 3);
-      ctx.fillRect(22, 9, 4, 4); // 前額結
+      // 紅白相間扭繩頭巾 (捻り鉢巻)
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(12, 13, 18, 4);
+      ctx.fillStyle = '#dc2626'; ctx.fillRect(15, 13, 4, 4); ctx.fillRect(23, 13, 4, 4);
+      ctx.fillRect(28, 12, 5, 5); // 額前大結
 
-      // 凶暴臉孔 (挑眉、歪嘴、刀疤)
+      // 凶悍神態 (刀疤、歪嘴斜笑)
       ctx.fillStyle = '#fbb67c';
-      ctx.fillRect(12, 13, 11, 8);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(15, 13, 6, 2); // 惡人濃眉
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(16, 15, 3, 3);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(17, 15, 2, 2);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(14, 16, 1, 4); // 臉頰刀疤！
-      ctx.fillStyle = '#7f1d1d';
-      ctx.fillRect(18, 19, 4, 2); // 歪嘴冷笑
+      ctx.fillRect(16, 17, 14, 10);
+      ctx.fillStyle = '#000000'; ctx.fillRect(20, 16, 8, 2); // 濃眉
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(21, 18, 5, 3);
+      ctx.fillStyle = '#000000'; ctx.fillRect(23, 18, 2, 2);
+      ctx.fillStyle = '#b91c1c'; ctx.fillRect(19, 19, 1, 6);  // 臉上刀疤！
+      ctx.fillStyle = '#7f1d1d'; ctx.fillRect(23, 23, 5, 2);  // 獰笑歪嘴
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(24, 23, 3, 1);  // 露齒
 
-      // 青色無袖半纏 (袒胸露出白布條 Sarashi 裹胸)
+      // 淺藍半纏 (法被) + 露出白裹胸布 (Sarashi)
       ctx.fillStyle = '#0284c7';
-      ctx.fillRect(9, 21, 14, 10);
+      ctx.fillRect(12, 27, 18, 13);
+      ctx.fillStyle = '#0369a1'; ctx.fillRect(12, 35, 18, 5);
       ctx.fillStyle = '#ffffff'; // 裹胸布
-      ctx.fillRect(15, 21, 7, 6);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(15, 23, 7, 1);
+      ctx.fillRect(20, 27, 9, 7);
+      ctx.fillStyle = '#15803d'; // 墨綠帶
+      ctx.fillRect(13, 33, 16, 4);
 
-      ctx.fillStyle = '#15803d'; // 墨綠腰帶
-      ctx.fillRect(10, 26, 12, 3);
-
-      // 肌肉手臂 (手腕綁黑色手甲護腕)
+      // 黑色護腕手臂
       ctx.fillStyle = '#fbb67c';
       if (action === 'punch') {
-        ctx.fillRect(18, 20, 10, 6);
-        ctx.fillStyle = '#111827'; ctx.fillRect(23, 20, 4, 6); // 護腕
-        ctx.fillStyle = '#fbb67c'; ctx.fillRect(28, 20, 5, 6);
+        ctx.fillRect(24, 26, 13, 7);
+        ctx.fillStyle = '#111827'; ctx.fillRect(30, 26, 5, 7);
+        ctx.fillStyle = '#fbb67c'; ctx.fillRect(36, 26, 6, 8);
       } else {
-        ctx.fillRect(16, 21, 5, 7);
-        ctx.fillStyle = '#111827'; ctx.fillRect(16, 25, 5, 3); // 護腕
+        ctx.fillRect(21, 27, 6, 9);
+        ctx.fillStyle = '#111827'; ctx.fillRect(21, 32, 6, 4);
       }
 
       ctx.fillStyle = '#fbb67c';
-      ctx.fillRect(11, 30, 4, 6); ctx.fillRect(16, 30, 4, 6);
+      ctx.fillRect(14, 39, 5, 8); ctx.fillRect(21, 39, 5, 8);
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(10, 35, 5, 3); ctx.fillRect(16, 35, 5, 3);
+      ctx.fillRect(13, 46, 6, 4); ctx.fillRect(21, 46, 6, 4);
     }
 
-    // 4. 敵人【惡代官 鐵甲保鑣 (Daikankan Elite)】：頭戴武士盔帽、蓄八字鬍、肩披甲冑
+    // 代官鐵甲護衛 (Daikan Armored Guard)
     function drawDaikanElite(ctx, action) {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath(); ctx.ellipse(18, 38, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(24, 51, 16, 4, 0, 0, Math.PI * 2); ctx.fill();
 
       if (action === 'down') {
-        ctx.fillStyle = '#ea580c'; ctx.fillRect(4, 29, 24, 8);
+        ctx.fillStyle = '#c2410c'; ctx.fillRect(6, 42, 32, 9);
         return;
       }
 
-      // 金飾武士陣笠
-      ctx.fillStyle = '#1e1b2e';
-      ctx.fillRect(8, 4, 16, 5);
-      ctx.fillStyle = '#facc15'; // 金色家紋前立
-      ctx.fillRect(19, 2, 4, 4);
+      // 金飾黑漆陣笠盔帽
+      ctx.fillStyle = '#18181b'; ctx.fillRect(10, 4, 22, 8);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(24, 2, 6, 5); // 金箔家紋前立
 
-      // 側臉蓄著八字鬍 (黑鬍鬚)
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(11, 9, 12, 11);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(14, 10, 7, 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(15, 12, 4, 3);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(17, 12, 2, 2);
-      ctx.fillRect(16, 17, 7, 2); // 濃黑八字鬍！
+      // 威嚴面容 (濃眉八字鬍)
+      ctx.fillStyle = '#f59e0b'; ctx.fillRect(14, 12, 15, 14);
+      ctx.fillStyle = '#000000'; ctx.fillRect(18, 13, 9, 3);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(19, 16, 5, 3);
+      ctx.fillStyle = '#000000'; ctx.fillRect(21, 16, 2, 2);
+      ctx.fillRect(19, 21, 10, 3); // 威武八字鬍！
 
-      // 橘色重錦袍 ＋ 黑色漆甲肩冑 (肩当 Sode)
-      ctx.fillStyle = '#ea580c';
-      ctx.fillRect(8, 19, 16, 12);
-      // 黑色帶金漆肩甲
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(13, 19, 7, 6);
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(14, 21, 5, 1);
-
-      ctx.fillStyle = '#1c1917';
-      ctx.fillRect(9, 26, 14, 4);
+      // 橘紅重錦武士鎧甲 + 黑漆肩甲 (大袖 Sode)
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(10, 25, 21, 15);
+      ctx.fillStyle = '#09090b'; ctx.fillRect(16, 25, 10, 9); // 漆黑護肩甲
+      ctx.fillStyle = '#facc15'; ctx.fillRect(17, 27, 8, 2);
+      ctx.fillStyle = '#1c1917'; ctx.fillRect(11, 33, 19, 5);
 
       ctx.fillStyle = '#ea580c';
       if (action === 'punch') {
-        ctx.fillRect(19, 20, 11, 6);
-        ctx.fillStyle = '#f59e0b'; ctx.fillRect(29, 19, 6, 7);
+        ctx.fillRect(25, 26, 14, 7);
+        ctx.fillStyle = '#f59e0b'; ctx.fillRect(38, 25, 7, 9);
       } else {
-        ctx.fillRect(16, 21, 5, 8);
+        ctx.fillRect(21, 27, 6, 10);
       }
 
       ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(10, 30, 5, 6); ctx.fillRect(17, 30, 5, 6);
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(9, 35, 6, 3); ctx.fillRect(16, 35, 6, 3);
+      ctx.fillRect(13, 39, 6, 8); ctx.fillRect(22, 39, 6, 8);
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(12, 46, 7, 4); ctx.fillRect(22, 46, 7, 4);
     }
 
-    // 5. 街道【町娘 阿茶】：傳統島田髷髮型、紅珊瑚簪花、粉櫻色花紋小紋和服
+    // 町娘阿茶 (Town Maiden Acha)
     function drawTownGirl(ctx, action) {
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.beginPath(); ctx.ellipse(18, 38, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(24, 51, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
 
-      // 優雅高聳的島田髷
+      // 島田髷 + 珊瑚髮簪
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(8, 4, 14, 9);
-      ctx.fillRect(5, 6, 5, 6);  // 圓弧後髻
-      ctx.fillStyle = '#f43f5e'; // 珊瑚簪花
-      ctx.fillRect(7, 4, 4, 3);
-      ctx.fillRect(5, 7, 2, 5);  // 垂墜紅流蘇
+      ctx.fillRect(10, 5, 18, 12);
+      ctx.fillRect(6, 8, 7, 8);
+      ctx.fillStyle = '#f43f5e'; ctx.fillRect(9, 5, 5, 4); // 珊瑚簪
+      ctx.fillRect(6, 9, 3, 7); // 紅流蘇
 
-      // 白皙娟秀臉龐
-      ctx.fillStyle = '#ffedd5';
-      ctx.fillRect(12, 10, 10, 9);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(15, 11, 5, 1); // 柔美柳葉眉
+      // 娟秀容顏 (腮紅、櫻桃小嘴)
+      ctx.fillStyle = '#ffedd5'; ctx.fillRect(15, 13, 13, 12);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(19, 14, 6, 1);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(20, 16, 4, 3);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(21, 16, 2, 2);
+      ctx.fillStyle = '#fda4af'; ctx.fillRect(16, 19, 4, 2); // 嬌羞腮紅
+      ctx.fillStyle = '#f43f5e'; ctx.fillRect(22, 21, 3, 2); // 櫻桃小口
+
+      // 粉櫻色花紋振袖和服
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(12, 25, 17, 16);
+      ctx.fillStyle = '#db2777'; ctx.fillRect(12, 35, 17, 6);
+      ctx.fillStyle = '#dc2626'; ctx.fillRect(13, 30, 15, 5); // 朱紅帶
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(13, 32, 15, 1);
+      // 白櫻花瓣花紋
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(16, 13, 3, 3);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(17, 13, 2, 2);
-      ctx.fillStyle = '#f43f5e';
-      ctx.fillRect(18, 17, 2, 1); // 櫻桃小口點紅
+      ctx.fillRect(15, 27, 2, 2); ctx.fillRect(22, 36, 2, 2);
 
-      // 粉櫻色長振袖和服 (帶有紅色花紋與大紅帶)
-      ctx.fillStyle = '#f472b6';
-      ctx.fillRect(10, 19, 13, 13);
-      ctx.fillStyle = '#db2777';
-      ctx.fillRect(10, 27, 13, 5); // 裙襬垂綴
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(18, 27, 5, 8);
+      ctx.fillStyle = '#ffedd5'; ctx.fillRect(19, 32, 4, 4);
 
-      // 大紅太鼓結腰帶
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(11, 23, 11, 4);
-      ctx.fillStyle = '#fef08a'; // 金色帶締
-      ctx.fillRect(11, 25, 11, 1);
-
-      // 雙手捧於腹前
-      ctx.fillStyle = '#f472b6';
-      ctx.fillRect(14, 21, 4, 6);
-      ctx.fillStyle = '#ffedd5';
-      ctx.fillRect(15, 25, 3, 3);
-
-      // 朱紅漆木屐
-      ctx.fillStyle = '#ffedd5';
-      ctx.fillRect(11, 31, 4, 5); ctx.fillRect(16, 31, 4, 5);
-      ctx.fillStyle = '#b91c1c';
-      ctx.fillRect(10, 35, 5, 3); ctx.fillRect(16, 35, 5, 3);
+      ctx.fillStyle = '#ffedd5'; ctx.fillRect(14, 40, 5, 7); ctx.fillRect(21, 40, 5, 7);
+      ctx.fillStyle = '#b91c1c'; ctx.fillRect(13, 46, 6, 4); ctx.fillRect(21, 46, 6, 4);
     }
 
-    // 建立 3/4 側視角貼圖工廠
     function createCharacterTexture(drawer, action) {
-      return createPixelCanvasTexture(36, 40, (ctx) => {
-        drawer(ctx, action);
-      });
+      return createPixelCanvasTexture(48, 54, (ctx) => drawer(ctx, action));
     }
 
     /* ==========================================================================
-       4. 江戶場景道地貼圖 (松樹、鳥居、高札場、石燈籠、茶傘、米俵)
+       4. 街景風物與打擊特效貼圖 (五重塔、火の見櫓、蕎麥屋台、酒樽、落櫻、衝擊星芒)
        ========================================================================== */
+    // 五重塔 (Pagoda)
+    const pagodaTex = createPixelCanvasTexture(48, 96, (ctx) => {
+      ctx.fillStyle = '#1c1538';
+      const layers = [
+        { y: 72, w: 44, h: 6 },
+        { y: 56, w: 38, h: 5 },
+        { y: 42, w: 32, h: 5 },
+        { y: 30, w: 26, h: 4 },
+        { y: 20, w: 20, h: 4 }
+      ];
+      ctx.fillRect(16, 18, 16, 78);
+      layers.forEach(l => {
+        ctx.fillRect(24 - l.w / 2, l.y, l.w, l.h);
+        ctx.fillRect(24 - l.w / 2 - 2, l.y - 1, 4, 2);
+        ctx.fillRect(24 + l.w / 2 - 2, l.y - 1, 4, 2);
+      });
+      // 頂部九環相輪寶塔尖
+      ctx.fillRect(23, 2, 2, 18);
+      ctx.fillRect(21, 5, 6, 2); ctx.fillRect(21, 8, 6, 2); ctx.fillRect(21, 11, 6, 2); ctx.fillRect(21, 14, 6, 2);
+    });
+
+    // 火の見櫓 (Hinomi-yagura / 江戶防汛消防望樓)
+    const hinomiYaguraTex = createPixelCanvasTexture(36, 84, (ctx) => {
+      ctx.fillStyle = '#3a271d'; // 木造骨架
+      // 四角支柱與斜撐
+      ctx.fillRect(6, 24, 3, 60); ctx.fillRect(27, 24, 3, 60);
+      ctx.fillRect(6, 44, 24, 2); ctx.fillRect(6, 64, 24, 2);
+      // 斜撐交叉
+      ctx.beginPath();
+      ctx.moveTo(9, 24); ctx.lineTo(27, 44); ctx.moveTo(27, 24); ctx.lineTo(9, 44);
+      ctx.moveTo(9, 44); ctx.lineTo(27, 64); ctx.moveTo(27, 44); ctx.lineTo(9, 64);
+      ctx.strokeStyle = '#281a13'; ctx.lineWidth = 1.5; ctx.stroke();
+      // 望樓頂部木頂與半鐘
+      ctx.fillStyle = '#1c1510';
+      ctx.beginPath(); ctx.moveTo(18, 8); ctx.lineTo(34, 16); ctx.lineTo(2, 16); ctx.fill();
+      ctx.fillStyle = '#f59e0b'; // 黃銅警鐘
+      ctx.fillRect(16, 17, 4, 5);
+      // 觀景平台欄杆
+      ctx.fillStyle = '#451a03'; ctx.fillRect(4, 21, 28, 4);
+    });
+
+    // 堆疊草蓆酒樽 (菰樽 Komodaru)
+    const sakeBarrelsTex = createPixelCanvasTexture(36, 28, (ctx) => {
+      ctx.fillStyle = '#fef3c7'; // 稻草編席
+      ctx.fillRect(2, 14, 15, 12); ctx.fillRect(19, 14, 15, 12); ctx.fillRect(10, 3, 16, 12);
+      ctx.fillStyle = '#b45309'; // 墨色竹箍
+      ctx.fillRect(2, 16, 15, 2); ctx.fillRect(2, 22, 15, 2);
+      ctx.fillRect(19, 16, 15, 2); ctx.fillRect(19, 22, 15, 2);
+      ctx.fillRect(10, 5, 16, 2); ctx.fillRect(10, 11, 16, 2);
+      // 樽前大紅印花「酒」「正宗」
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(7, 18, 5, 5); ctx.fillRect(24, 18, 5, 5); ctx.fillRect(15, 7, 6, 5);
+    });
+
+    // 蕎麥屋台車 (Soba Street Cart)
+    const sobaCartTex = createPixelCanvasTexture(44, 38, (ctx) => {
+      // 白布屋頂
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(4, 4, 36, 8);
+      ctx.fillStyle = '#1e3a8a'; ctx.fillRect(4, 10, 36, 2);
+      ctx.fillStyle = '#0f172a'; ctx.font = 'bold 7px monospace'; ctx.fillText('そば', 14, 9);
+      // 木支架與櫃檯
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(6, 12, 2, 16); ctx.fillRect(36, 12, 2, 16);
+      ctx.fillStyle = '#92400e'; ctx.fillRect(4, 20, 36, 8);
+      // 暖色小提燈
+      ctx.fillStyle = '#ea580c'; ctx.fillRect(10, 13, 4, 6);
+      // 車輪 (Spoked Wheels)
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath(); ctx.arc(12, 31, 6, 0, Math.PI * 2); ctx.arc(32, 31, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath(); ctx.arc(12, 31, 4, 0, Math.PI * 2); ctx.arc(32, 31, 4, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // 櫻花花瓣 (Sakura Petal)
+    const sakuraPetalTex = createPixelCanvasTexture(12, 12, (ctx) => {
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath(); ctx.ellipse(6, 6, 5, 3, Math.PI / 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(4, 5, 3, 2);
+    });
+
+    // 名木黑松 (Pine Tree)
     const pineTreeTex = createPixelCanvasTexture(48, 64, (ctx) => {
       ctx.fillStyle = '#5c3317';
       ctx.fillRect(22, 32, 5, 32); ctx.fillRect(19, 42, 6, 4); ctx.fillRect(24, 24, 4, 12);
@@ -916,13 +1004,16 @@
       drawPine(14, 24, 12); drawPine(34, 20, 11); drawPine(24, 12, 13);
     });
 
+    // 朱紅鳥居 (Torii Gate)
     const toriiTex = createPixelCanvasTexture(48, 48, (ctx) => {
       ctx.fillStyle = '#111827'; ctx.fillRect(2, 4, 44, 4);
       ctx.fillStyle = '#dc2626'; ctx.fillRect(4, 7, 40, 4); ctx.fillRect(6, 15, 36, 3);
       ctx.fillRect(10, 8, 4, 40); ctx.fillRect(34, 8, 4, 40);
       ctx.fillStyle = '#111827'; ctx.fillRect(9, 44, 6, 4); ctx.fillRect(33, 44, 6, 4);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(22, 9, 4, 6); // 金色神額
     });
 
+    // 高札場 (Notice Board)
     const kosatsubaTex = createPixelCanvasTexture(36, 40, (ctx) => {
       ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.moveTo(18, 2); ctx.lineTo(34, 8); ctx.lineTo(2, 8); ctx.fill();
       ctx.fillStyle = '#78350f'; ctx.fillRect(4, 8, 28, 16);
@@ -932,22 +1023,29 @@
       ctx.fillStyle = '#5c3317'; ctx.fillRect(8, 24, 3, 16); ctx.fillRect(25, 24, 3, 16);
     });
 
+    // 春日石燈籠 (Stone Lantern)
     const stoneLanternTex = createPixelCanvasTexture(24, 40, (ctx) => {
       ctx.fillStyle = '#64748b'; ctx.fillRect(10, 2, 4, 4); ctx.fillRect(2, 6, 20, 4);
-      ctx.fillStyle = '#fef08a'; ctx.fillRect(6, 10, 12, 8);
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(6, 10, 12, 8); // 溫潤燭火光
       ctx.fillStyle = '#334155'; ctx.fillRect(5, 10, 2, 8); ctx.fillRect(17, 10, 2, 8);
       ctx.fillStyle = '#475569'; ctx.fillRect(4, 18, 16, 4); ctx.fillRect(9, 22, 6, 12);
       ctx.fillRect(5, 34, 14, 6);
     });
 
+    // 野點傘茶凳 (Tea Umbrella & Bench)
     const teaUmbrellaTex = createPixelCanvasTexture(40, 52, (ctx) => {
       ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(20, 4); ctx.lineTo(38, 18); ctx.lineTo(2, 18); ctx.fill();
       ctx.fillStyle = '#ffffff'; ctx.fillRect(18, 2, 4, 3);
       ctx.fillStyle = '#78350f'; ctx.fillRect(19, 18, 2, 34);
-      ctx.fillStyle = '#b91c1c'; ctx.fillRect(4, 40, 32, 6);
+      ctx.fillStyle = '#b91c1c'; ctx.fillRect(4, 40, 32, 6); // 緋毛氈茶凳
       ctx.fillStyle = '#451a03'; ctx.fillRect(6, 46, 3, 6); ctx.fillRect(31, 46, 3, 6);
+      // 三色花見糰子
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(16, 38, 2, 2);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(18, 38, 2, 2);
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(20, 38, 2, 2);
     });
 
+    // 稻草米俵 (Rice Bales)
     const riceBaleTex = createPixelCanvasTexture(32, 24, (ctx) => {
       ctx.fillStyle = '#d97706'; ctx.fillRect(2, 12, 13, 10); ctx.fillRect(17, 12, 13, 10); ctx.fillRect(9, 3, 14, 10);
       ctx.fillStyle = '#78350f';
@@ -955,53 +1053,110 @@
       ctx.fillRect(12, 3, 2, 10); ctx.fillRect(18, 3, 2, 10);
     });
 
+    // 8-Bit 打擊星芒衝擊特效 (Hit Spark Burst)
+    const hitSparkTex = createPixelCanvasTexture(24, 24, (ctx) => {
+      ctx.fillStyle = '#fef08a';
+      // 八角星芒
+      ctx.beginPath();
+      ctx.moveTo(12, 1); ctx.lineTo(15, 9); ctx.lineTo(23, 12); ctx.lineTo(15, 15);
+      ctx.lineTo(12, 23); ctx.lineTo(9, 15); ctx.lineTo(1, 12); ctx.lineTo(9, 9);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(10, 10, 4, 4);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(4, 4, 2, 2); ctx.fillRect(18, 4, 2, 2); ctx.fillRect(4, 18, 2, 2); ctx.fillRect(18, 18, 2, 2);
+    });
+
+    // 踏步揚塵粒子 (Dust Puff)
+    const dustPuffTex = createPixelCanvasTexture(16, 16, (ctx) => {
+      ctx.fillStyle = 'rgba(214, 190, 160, 0.85)';
+      ctx.beginPath(); ctx.arc(8, 9, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath(); ctx.arc(6, 7, 3, 0, Math.PI * 2); ctx.fill();
+    });
+
     /* ==========================================================================
-       5. Three.js 2.5D 場景搭建
+       5. Three.js 2.5D 美景搭建 (解析度提升至 640x360，極致清晰像素浮世繪)
        ========================================================================== */
     const canvas = document.getElementById('game-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    const INTERNAL_WIDTH = 480;
-    const INTERNAL_HEIGHT = 270;
+    const INTERNAL_WIDTH = 640;
+    const INTERNAL_HEIGHT = 360;
     renderer.setSize(INTERNAL_WIDTH, INTERNAL_HEIGHT, false);
     renderer.setPixelRatio(1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.BasicShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#161026');
-    scene.fog = new THREE.Fog('#161026', 26, 68);
+    scene.background = new THREE.Color('#120c24');
+    scene.fog = new THREE.Fog('#120c24', 28, 75);
 
     const camera = new THREE.PerspectiveCamera(36, INTERNAL_WIDTH / INTERNAL_HEIGHT, 0.1, 100);
     camera.position.set(0, 4.8, 10.5);
     camera.lookAt(0, 1.2, 0);
 
-    const ambientLight = new THREE.AmbientLight('#74789e', 1.5);
+    const ambientLight = new THREE.AmbientLight('#7c82ab', 1.7);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight('#ffe8ba', 1.6);
+    const dirLight = new THREE.DirectionalLight('#ffe8ba', 1.7);
     dirLight.position.set(12, 18, 9);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    // 富士山遠景
-    const fujiTexture = createPixelCanvasTexture(128, 64, (ctx) => {
-      const grad = ctx.createLinearGradient(0, 0, 0, 64);
-      grad.addColorStop(0, '#160e33'); grad.addColorStop(0.35, '#481545'); grad.addColorStop(0.7, '#c2410c'); grad.addColorStop(1, '#f59e0b');
-      ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 64);
+    // 遠景：浮世繪夕陽暮霞 + 葛飾北齋赤富士 + 三日月 + 金箔霞雲 + 江戶天守閣剪影
+    const fujiTexture = createPixelCanvasTexture(320, 160, (ctx) => {
+      const grad = ctx.createLinearGradient(0, 0, 0, 160);
+      grad.addColorStop(0, '#0d0924');
+      grad.addColorStop(0.25, '#2e1038');
+      grad.addColorStop(0.55, '#881337');
+      grad.addColorStop(0.75, '#c2410c');
+      grad.addColorStop(0.9, '#d97706');
+      grad.addColorStop(1, '#fde047');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 320, 160);
 
-      ctx.fillStyle = '#20164d'; ctx.beginPath();
-      ctx.moveTo(24, 64); ctx.lineTo(64, 16); ctx.lineTo(76, 16); ctx.lineTo(116, 64); ctx.fill();
+      // 上弦三日月 (Crescent Moon)
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath(); ctx.arc(268, 32, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0d0924';
+      ctx.beginPath(); ctx.arc(263, 29, 11, 0, Math.PI * 2); ctx.fill();
 
-      ctx.fillStyle = '#ffffff'; ctx.beginPath();
-      ctx.moveTo(64, 16); ctx.lineTo(76, 16); ctx.lineTo(82, 27); ctx.lineTo(74, 24); ctx.lineTo(70, 30); ctx.lineTo(66, 25); ctx.lineTo(58, 27); ctx.fill();
+      // 箱根遠山層疊剪影
+      ctx.fillStyle = '#1c1340';
+      ctx.beginPath();
+      ctx.moveTo(0, 160); ctx.lineTo(30, 120); ctx.lineTo(90, 138); ctx.lineTo(160, 115);
+      ctx.lineTo(240, 135); ctx.lineTo(320, 118); ctx.lineTo(320, 160); ctx.fill();
 
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
-      ctx.fillRect(6, 36, 45, 3); ctx.fillRect(72, 42, 50, 4); ctx.fillRect(30, 48, 68, 3);
+      // 富士山 (赤富士・北齋之魂)
+      ctx.fillStyle = '#261356';
+      ctx.beginPath();
+      ctx.moveTo(70, 160); ctx.lineTo(155, 42); ctx.lineTo(185, 42); ctx.lineTo(270, 160);
+      ctx.fill();
+
+      // 白雪冠頂
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(155, 42); ctx.lineTo(185, 42); ctx.lineTo(202, 70); ctx.lineTo(182, 62);
+      ctx.lineTo(172, 76); ctx.lineTo(162, 64); ctx.lineTo(142, 70);
+      ctx.fill();
+
+      // 天守閣剪影 (Edo Castle Tenshu)
+      ctx.fillStyle = '#130d2e';
+      ctx.fillRect(22, 110, 32, 50);
+      ctx.fillRect(16, 125, 44, 6); ctx.fillRect(20, 112, 36, 5); ctx.fillRect(25, 102, 26, 4);
+      // 金鯱
+      ctx.fillStyle = '#facc15'; ctx.fillRect(24, 100, 2, 2); ctx.fillRect(50, 100, 2, 2);
+
+      // 金箔浮世繪長條霞雲 (すやり霞)
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.42)';
+      ctx.fillRect(15, 85, 110, 6);
+      ctx.fillRect(175, 96, 130, 7);
+      ctx.fillRect(75, 114, 160, 6);
     });
-    const fujiPlane = new THREE.Mesh(new THREE.PlaneGeometry(62, 24), new THREE.MeshBasicMaterial({ map: fujiTexture, depthWrite: false }));
-    fujiPlane.position.set(0, 8.5, -13);
+    const fujiPlane = new THREE.Mesh(new THREE.PlaneGeometry(72, 28), new THREE.MeshBasicMaterial({ map: fujiTexture, depthWrite: false }));
+    fujiPlane.position.set(0, 9.2, -14);
     scene.add(fujiPlane);
 
-    // 街道地面
+    // 街道地面 (東海道鋪石路)
     const streetTex = createPixelCanvasTexture(64, 64, (ctx) => {
       ctx.fillStyle = '#45382f'; ctx.fillRect(0, 0, 64, 64);
       ctx.fillStyle = '#5a4b40';
@@ -1016,13 +1171,13 @@
       ctx.fillStyle = '#1c1613'; ctx.fillRect(0, 0, 64, 2);
     });
     streetTex.wrapS = streetTex.wrapT = THREE.RepeatWrapping;
-    streetTex.repeat.set(20, 2);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 8), new THREE.MeshLambertMaterial({ map: streetTex }));
+    streetTex.repeat.set(22, 2);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(110, 8), new THREE.MeshLambertMaterial({ map: streetTex }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // 町屋牆面貼圖
+    // 町屋牆面 (黑木樑柱 + 白漆喰壁 + 格子窗暖燈)
     const machiyaWallTex = createPixelCanvasTexture(32, 32, (ctx) => {
       ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 32, 18);
       ctx.fillStyle = '#26170e'; ctx.fillRect(0, 0, 3, 32); ctx.fillRect(29, 0, 3, 32); ctx.fillRect(0, 0, 32, 3);
@@ -1034,50 +1189,58 @@
     });
 
     const shopsInScene = [];
+    const lanternLights = []; // 提燈燭火微幅呼吸閃爍
+
     function buildEdoShop(xPos, shopKey, norenText, norenBg, signboardText) {
       const grp = new THREE.Group();
       grp.position.set(xPos, 0, -3.4);
 
-      const house = new THREE.Mesh(new THREE.BoxGeometry(4.6, 3.5, 2.5), new THREE.MeshLambertMaterial({ map: machiyaWallTex }));
-      house.position.y = 1.75; house.castShadow = true; grp.add(house);
+      const house = new THREE.Mesh(new THREE.BoxGeometry(4.8, 3.6, 2.6), new THREE.MeshLambertMaterial({ map: machiyaWallTex }));
+      house.position.y = 1.8; house.castShadow = true; grp.add(house);
 
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.4, 4), new THREE.MeshLambertMaterial({ color: '#181b24' }));
-      roof.position.set(0, 3.9, 0); roof.rotation.y = Math.PI / 4; roof.scale.set(1.4, 1, 0.95);
+      // 江戶瓦屋頂 (Kawara)
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(4.0, 1.4, 4), new THREE.MeshLambertMaterial({ color: '#181b24' }));
+      roof.position.set(0, 4.0, 0); roof.rotation.y = Math.PI / 4; roof.scale.set(1.4, 1, 0.95);
       roof.castShadow = true; grp.add(roof);
 
-      const subRoof = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.2, 1.0), new THREE.MeshLambertMaterial({ color: '#27201c' }));
-      subRoof.position.set(0, 2.45, 1.35); grp.add(subRoof);
+      const subRoof = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.22, 1.1), new THREE.MeshLambertMaterial({ color: '#27201c' }));
+      subRoof.position.set(0, 2.5, 1.4); grp.add(subRoof);
 
+      // 暖簾 (Noren)
       const norenTex = createPixelCanvasTexture(32, 32, (ctx) => {
         ctx.fillStyle = norenBg; ctx.fillRect(0, 0, 32, 32);
         ctx.fillStyle = '#111'; ctx.fillRect(10, 16, 2, 16); ctx.fillRect(20, 16, 2, 16);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
         ctx.fillText(norenText, 16, 12);
       });
-      const noren = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.0), new THREE.MeshBasicMaterial({ map: norenTex, transparent: true }));
-      noren.position.set(0, 1.85, 1.36); grp.add(noren);
+      const noren = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.05), new THREE.MeshBasicMaterial({ map: norenTex, transparent: true }));
+      noren.position.set(0, 1.9, 1.42); grp.add(noren);
 
-      const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 6), new THREE.MeshBasicMaterial({ color: '#dc2626' }));
-      lantern.position.set(1.8, 2.15, 1.45); grp.add(lantern);
-      const lanternLight = new THREE.PointLight('#f97316', 1.3, 5);
-      lanternLight.position.set(1.8, 2.15, 1.55); grp.add(lanternLight);
+      // 赤提燈與動態點光源
+      const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.58, 6), new THREE.MeshBasicMaterial({ color: '#dc2626' }));
+      lantern.position.set(1.9, 2.2, 1.5); grp.add(lantern);
+      const lanternLight = new THREE.PointLight('#f97316', 1.4, 5.5);
+      lanternLight.position.set(1.9, 2.2, 1.6); grp.add(lanternLight);
+      lanternLights.push(lanternLight);
 
+      // 木雕店面招牌
       const signTex = createPixelCanvasTexture(32, 12, (ctx) => {
         ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 32, 12);
         ctx.fillStyle = '#fde68a'; ctx.strokeRect(1, 1, 30, 10);
         ctx.fillStyle = '#fef08a'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
         ctx.fillText(signboardText, 16, 9);
       });
-      const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.6), new THREE.MeshBasicMaterial({ map: signTex, transparent: true }));
-      signMesh.position.set(0, 2.7, 1.38); grp.add(signMesh);
+      const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.65), new THREE.MeshBasicMaterial({ map: signTex, transparent: true }));
+      signMesh.position.set(0, 2.75, 1.45); grp.add(signMesh);
 
+      // 互動提示浮空標誌
       const markTex = createPixelCanvasTexture(32, 32, (ctx) => {
         ctx.fillStyle = '#facc15'; ctx.fillRect(0, 0, 32, 32);
         ctx.fillStyle = '#000'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center';
         ctx.fillText('商', 16, 24);
       });
-      const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), new THREE.MeshBasicMaterial({ map: markTex, transparent: true }));
-      mark.position.set(0, 4.5, 0); grp.add(mark);
+      const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.MeshBasicMaterial({ map: markTex, transparent: true }));
+      mark.position.set(0, 4.6, 0); grp.add(mark);
 
       scene.add(grp);
       shopsInScene.push({ key: shopKey, data: SHOP_DATA[shopKey], position: new THREE.Vector3(xPos, 0, -2.0), mark });
@@ -1091,20 +1254,83 @@
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
       mesh.position.set(x, h / 2, z);
       scene.add(mesh);
+      return mesh;
     }
-    addEdoProp(pineTreeTex, 2.4, 3.2, -16, -3.5);
-    addEdoProp(pineTreeTex, 2.2, 3.0, -5.5, -3.8);
-    addEdoProp(pineTreeTex, 2.4, 3.2, 5.5, -3.8);
-    addEdoProp(pineTreeTex, 2.5, 3.3, 16.5, -3.5);
-    addEdoProp(toriiTex, 2.4, 2.4, -18.5, -3.2);
-    addEdoProp(kosatsubaTex, 1.8, 2.0, -2.8, -2.7);
+
+    // 遠景古寺五重塔與江戶防汛火の見櫓
+    addEdoProp(pagodaTex, 3.8, 7.6, -22, -6.8);
+    addEdoProp(hinomiYaguraTex, 2.8, 6.5, -14, -5.8);
+    addEdoProp(pagodaTex, 3.4, 6.8, 23, -6.8);
+
+    // 街道風物與植栽
+    addEdoProp(pineTreeTex, 2.6, 3.4, -16.5, -3.6);
+    addEdoProp(toriiTex, 2.6, 2.6, -18.5, -3.2);
+    addEdoProp(sobaCartTex, 2.2, 1.9, -13.5, -2.5); // 蕎麥屋台車
+    addEdoProp(riceBaleTex, 1.6, 1.2, -8.8, -2.4);  // 米俵
     addEdoProp(stoneLanternTex, 1.0, 1.8, -7.5, -2.5);
+    addEdoProp(kosatsubaTex, 1.8, 2.0, -2.8, -2.7); // 高札場
+    addEdoProp(sakeBarrelsTex, 1.7, 1.3, 2.6, -2.4); // 菰樽酒桶
+    addEdoProp(pineTreeTex, 2.4, 3.2, 5.5, -3.8);
     addEdoProp(stoneLanternTex, 1.0, 1.8, 7.5, -2.5);
-    addEdoProp(teaUmbrellaTex, 1.8, 2.4, 8.8, -2.3);
-    addEdoProp(riceBaleTex, 1.5, 1.1, -8.8, -2.4);
+    addEdoProp(teaUmbrellaTex, 1.9, 2.5, 8.8, -2.3); // 野點茶傘茶凳
+    addEdoProp(pineTreeTex, 2.6, 3.4, 16.5, -3.5);
 
     /* ==========================================================================
-       6. 玩家角色【國政】高細節 3/4 側身模型實例
+       6. 櫻吹雪粒子特效系統 (Falling Sakura Petals)
+       ========================================================================== */
+    const petals = [];
+    const petalGeo = new THREE.PlaneGeometry(0.26, 0.26);
+    const petalMat = new THREE.MeshBasicMaterial({ map: sakuraPetalTex, transparent: true });
+
+    for (let i = 0; i < 55; i++) {
+      const mesh = new THREE.Mesh(petalGeo, petalMat);
+      const px = (Math.random() - 0.5) * 55;
+      const py = Math.random() * 8.5 + 0.5;
+      const pz = (Math.random() - 0.5) * 6;
+      mesh.position.set(px, py, pz);
+      mesh.rotation.z = Math.random() * Math.PI;
+      scene.add(mesh);
+      petals.push({
+        mesh,
+        vx: -(Math.random() * 0.035 + 0.02), // 隨春風由右向左飄落
+        vy: -(Math.random() * 0.015 + 0.01),
+        rotSpeed: (Math.random() - 0.5) * 0.06,
+        swingOffset: Math.random() * 10
+      });
+    }
+
+    /* ==========================================================================
+       7. 打擊星芒衝擊與踏步揚塵粒子系統 (Combat Hit Sparks & Dust FX)
+       ========================================================================== */
+    const hitSparks = [];
+    const sparkGeo = new THREE.PlaneGeometry(0.8, 0.8);
+    const sparkMat = new THREE.MeshBasicMaterial({ map: hitSparkTex, transparent: true, depthWrite: false });
+
+    function spawnHitSpark(x, y, z) {
+      const mesh = new THREE.Mesh(sparkGeo, sparkMat.clone());
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      hitSparks.push({ mesh, life: 7, maxLife: 7 });
+    }
+
+    const dustPuffs = [];
+    const dustGeo = new THREE.PlaneGeometry(0.5, 0.5);
+    const dustMat = new THREE.MeshBasicMaterial({ map: dustPuffTex, transparent: true, depthWrite: false });
+
+    function spawnDustPuff(x, y, z) {
+      const mesh = new THREE.Mesh(dustGeo, dustMat.clone());
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      dustPuffs.push({ mesh, life: 12, maxLife: 12, vy: 0.01 });
+    }
+
+    let screenShakeAmount = 0;
+    function triggerCamShake(val) {
+      screenShakeAmount = Math.max(screenShakeAmount, val);
+    }
+
+    /* ==========================================================================
+       8. 玩家角色【國政】高精緻實例
        ========================================================================== */
     const playerSprites = {
       idle: createCharacterTexture(drawKunimasa, 'idle'),
@@ -1117,8 +1343,8 @@
     };
 
     const playerMat = new THREE.MeshBasicMaterial({ map: playerSprites.idle, transparent: true, side: THREE.DoubleSide });
-    const playerMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.9), playerMat);
-    playerMesh.position.set(-6, 0.95, 0);
+    const playerMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 1.92), playerMat);
+    playerMesh.position.set(-6, 0.96, 0);
     playerMesh.castShadow = true;
     scene.add(playerMesh);
 
@@ -1160,7 +1386,7 @@
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
       mesh.position.set(x, 0.35, z);
       scene.add(mesh);
-      droppedItems.push({ mesh, type, x, z, y: 0.35, vy: 0.12, alive: true });
+      droppedItems.push({ mesh, type, x, z, y: 0.35, vy: 0.14, alive: true });
     }
 
     const crates = [];
@@ -1177,6 +1403,8 @@
     function breakCrate(c) {
       c.alive = false; scene.remove(c.mesh);
       audio.playPunchHit();
+      triggerCamShake(0.08);
+      spawnHitSpark(c.x, 0.5, c.z);
       for (let i = 0; i < 7; i++) {
         const dMesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshLambertMaterial({ color: '#b45309' }));
         dMesh.position.set(c.x, 0.4, c.z);
@@ -1198,27 +1426,12 @@
     }
 
     /* ==========================================================================
-       7. 敵人群體與街頭 NPC 實例（各具完全不同特色與神態）
+       9. 敵人群體與街頭 NPC 實例
        ========================================================================== */
     const GANG_CLASSES = [
-      {
-        name: '駿河深笠 浪人',
-        hp: 55,
-        shout: 'てめえ！覚悟！',
-        drawer: drawRoninKasa
-      },
-      {
-        name: '關東頭巾 混混',
-        hp: 45,
-        shout: 'なめんなよ！',
-        drawer: drawKantoThug
-      },
-      {
-        name: '惡代官 鐵甲護衛',
-        hp: 75,
-        shout: '成敗してやる！',
-        drawer: drawDaikanElite
-      }
+      { name: '駿河深笠 浪人', hp: 55, shout: 'てめえ！覚悟！', drawer: drawRoninKasa },
+      { name: '關東頭巾 混混', hp: 45, shout: 'なめんなよ！', drawer: drawKantoThug },
+      { name: '惡代官 鐵甲護衛', hp: 75, shout: '成敗してやる！', drawer: drawDaikanElite }
     ];
 
     const activeEnemies = [];
@@ -1235,8 +1448,8 @@
       };
 
       const mat = new THREE.MeshBasicMaterial({ map: sprites.idle, transparent: true, side: THREE.DoubleSide });
-      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.9), mat);
-      mesh.position.set(x, 0.95, z);
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 1.92), mat);
+      mesh.position.set(x, 0.96, z);
       scene.add(mesh);
 
       const enemy = {
@@ -1264,7 +1477,6 @@
       spawnWaveEnemy(spawnX, spawnZ);
     }
 
-    // 町娘阿茶
     const girlSprites = {
       idle: createCharacterTexture(drawTownGirl, 'idle'),
       walk: createCharacterTexture(drawTownGirl, 'walk'),
@@ -1323,7 +1535,7 @@
     }
 
     /* ==========================================================================
-       8. 側面直拳、橫飛踢、奧義馬赫拳
+       10. 招式打擊判定
        ========================================================================== */
     const keys = { up: false, down: false, left: false, right: false };
     let lastKeyTime = { left: 0, right: 0 };
@@ -1390,6 +1602,7 @@
         playerObj.vy = 0.23;
         playerObj.isGrounded = false;
         audio.playJump();
+        spawnDustPuff(playerObj.x, 0.2, playerObj.z);
       }
     }
 
@@ -1449,6 +1662,9 @@
 
         if (dx < 0 && dx > -range && dz < 0.9) {
           audio.playPunchHit();
+          triggerCamShake(0.08);
+          spawnHitSpark(en.x, 1.1, en.z);
+
           en.hp -= dmg;
           en.x += playerObj.facing * knockback;
           showDamageFloat(dmg, en.x, en.y + 1, en.z);
@@ -1462,13 +1678,17 @@
             en.state = 'down';
             en.mesh.material.map = en.sprites.down;
             audio.playEnemyDown();
+            triggerCamShake(0.16);
             showSpeechBubble(en, 'ぎゃああーっ！');
 
             gameState.kills++;
             document.getElementById('kill-count').innerText = gameState.kills;
 
-            spawnDroppedItem('coin', en.x, en.z);
-            showToast(`💥 討伐【${en.gClass.name}】！掉落文錢！`);
+            // 爆散金幣雨 (3 枚文錢彈跳)
+            for (let c = 0; c < 3; c++) {
+              spawnDroppedItem('coin', en.x + (Math.random() - 0.5) * 0.8, en.z + (Math.random() - 0.5) * 0.8);
+            }
+            showToast(`💥 討伐【${en.gClass.name}】！噴發文錢！`);
 
             setTimeout(() => {
               scene.remove(en.mesh);
@@ -1533,11 +1753,11 @@
     }
 
     /* ==========================================================================
-       9. UI 控制與購物車
+       11. UI 控制與購物車
        ========================================================================== */
     function updateHUD() {
       document.getElementById('hud-gold').innerText = gameState.gold.toLocaleString();
-      document.getElementById('hud-weapon').innerText = gameState.heldWeapon ? '木刀 (威力+14)' : '徒手';
+      document.getElementById('hud-weapon').innerText = gameState.heldWeapon ? '木刀 (威力+14)' : '腰間佩刀・徒手';
       document.getElementById('player-hp-bar').style.width = `${(gameState.hp / gameState.maxHp) * 100}%`;
       document.getElementById('player-hp-text').innerText = `${gameState.hp}/${gameState.maxHp}`;
       const count = gameState.cart.reduce((s, i) => s + i.qty, 0);
@@ -1713,14 +1933,61 @@
     }
 
     /* ==========================================================================
-       10. 2.5D 主循環引擎
+       12. 2.5D 主循環引擎 (落櫻飄雪、提燈呼吸、打擊震顫、揚塵消隱)
        ========================================================================== */
-    const BASE_SPEED = 0.085;
+    const BASE_SPEED = 0.088;
     let walkTicker = 0;
+    let timeTick = 0;
+    let dashDustTicker = 0;
 
     function animate() {
       requestAnimationFrame(animate);
+      timeTick += 0.04;
 
+      // 提燈燭火微幅呼吸閃爍效果
+      lanternLights.forEach((light, idx) => {
+        light.intensity = 1.3 + Math.sin(timeTick * 3.2 + idx) * 0.28;
+      });
+
+      // 打擊星芒衝擊動畫消散
+      for (let i = hitSparks.length - 1; i >= 0; i--) {
+        const s = hitSparks[i];
+        s.life--;
+        s.mesh.scale.multiplyScalar(1.08);
+        if (s.life <= 0) {
+          scene.remove(s.mesh);
+          hitSparks.splice(i, 1);
+        }
+      }
+
+      // 揚塵粒子動畫消散
+      for (let i = dustPuffs.length - 1; i >= 0; i--) {
+        const d = dustPuffs[i];
+        d.life--;
+        d.mesh.position.y += d.vy;
+        d.mesh.scale.multiplyScalar(1.05);
+        if (d.life <= 0) {
+          scene.remove(d.mesh);
+          dustPuffs.splice(i, 1);
+        }
+      }
+
+      // 櫻吹雪花瓣飄動邏輯
+      petals.forEach(p => {
+        p.mesh.position.x += p.vx;
+        p.mesh.position.y += p.vy + Math.sin(timeTick * 2 + p.swingOffset) * 0.005;
+        p.mesh.rotation.z += p.rotSpeed;
+
+        if (p.mesh.position.x < camera.position.x - 26) {
+          p.mesh.position.x = camera.position.x + 26;
+          p.mesh.position.y = Math.random() * 8.5 + 0.5;
+        }
+        if (p.mesh.position.y < 0.1) {
+          p.mesh.position.y = 8.5;
+        }
+      });
+
+      // 移動與破陣疾走 (Dash)
       let mx = 0;
       let mz = 0;
       if (keys.left) { mx -= 1; playerObj.facing = -1; }
@@ -1730,6 +1997,14 @@
 
       const moving = (mx !== 0 || mz !== 0);
       const speed = playerObj.isDashing ? BASE_SPEED * 1.7 : BASE_SPEED;
+
+      // 疾走揚塵
+      if (playerObj.isDashing && moving && playerObj.isGrounded) {
+        dashDustTicker++;
+        if (dashDustTicker % 6 === 0) {
+          spawnDustPuff(playerObj.x - playerObj.facing * 0.5, 0.18, playerObj.z);
+        }
+      }
 
       if (playerObj.stateTimer > 0) {
         playerObj.stateTimer--;
@@ -1761,14 +2036,26 @@
           playerObj.y = 0;
           playerObj.vy = 0;
           playerObj.isGrounded = true;
+          // 落地揚塵
+          spawnDustPuff(playerObj.x - 0.2, 0.18, playerObj.z);
+          spawnDustPuff(playerObj.x + 0.2, 0.18, playerObj.z);
         }
       }
 
       playerMesh.scale.x = playerObj.facing;
-      playerMesh.position.set(playerObj.x, 0.95 + playerObj.y, playerObj.z);
+      playerMesh.position.set(playerObj.x, 0.96 + playerObj.y, playerObj.z);
 
+      // 相機跟隨與衝擊螢幕微震
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerObj.x, 0.09);
-      fujiPlane.position.x = camera.position.x * 0.85;
+      if (screenShakeAmount > 0.005) {
+        camera.position.y = 4.8 + (Math.random() - 0.5) * screenShakeAmount;
+        camera.position.x += (Math.random() - 0.5) * screenShakeAmount;
+        screenShakeAmount *= 0.82;
+      } else {
+        camera.position.y = 4.8;
+        screenShakeAmount = 0;
+      }
+      fujiPlane.position.x = camera.position.x * 0.86;
 
       activeEnemies.forEach(en => {
         if (!en.alive) return;
@@ -1799,13 +2086,15 @@
             en.stateTimer = 10;
             en.mesh.material.map = en.sprites.punch;
             audio.playKickHit();
+            triggerCamShake(0.09);
+            spawnHitSpark(playerObj.x, 1.0, playerObj.z);
             gameState.hp = Math.max(0, gameState.hp - 12);
             updateHUD();
             showDamageFloat(12, playerObj.x, playerObj.y, playerObj.z, 'text-red-500');
             showToast(`遭【${en.gClass.name}】直拳重擊！體力 -12！`);
           }
         }
-        en.mesh.position.set(en.x, 0.95, en.z);
+        en.mesh.position.set(en.x, 0.96, en.z);
       });
 
       activeCivilians.forEach(civ => {
