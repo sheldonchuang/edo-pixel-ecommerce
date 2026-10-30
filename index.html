@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>熱血時代劇 - 1991 FC 駿河宿場篇 (原汁原味街頭大亂鬥)</title>
+  <title>熱血時代劇 - 1991 FC 正統側面視角復刻 (駿河宿場大亂鬥)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Pixel Fonts (DotGothic16 支援漢字假名，Press Start 2P 支援 FC 標題) -->
+  <!-- Google Pixel Fonts (DotGothic16 支援漢字假名，Press Start 2P 支援 FC 數字) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
     .font-nes {
       font-family: 'Press Start 2P', monospace;
     }
-    /* 核心 8-bit 像素畫布：低原生解析度近鄰縮放，百分之百還原 FC 鋸齒顆粒 */
+    /* 核心 8-bit 像素畫布：低原生解析度近鄰縮放，忠實還原 1991 FC 顆粒感 */
     #game-canvas {
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
@@ -39,7 +39,7 @@
       object-fit: cover;
       display: block;
     }
-    /* 1991 FC 熱血時代劇專屬黑底白雙線邊框 */
+    /* 1991 FC 熱血時代劇黑底白框經典介面 */
     .fc-box {
       background-color: #000000;
       border: 4px solid #ffffff;
@@ -54,7 +54,7 @@
       pointer-events: none;
     }
     .fc-btn {
-      background-color: #1e1b2e;
+      background-color: #1a1728;
       border: 3px solid #ffffff;
       color: #ffffff;
       transition: all 0.05s ease;
@@ -67,28 +67,22 @@
     .fc-btn:active {
       transform: translate(2px, 2px);
     }
-    /* 復古 CRT 電視掃描線濾鏡 */
+    /* CRT 電視掃描線 */
     .crt-scanlines {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.32) 50%);
       background-size: 100% 4px;
       pointer-events: none;
       z-index: 20;
     }
-    /* 對話氣泡跳出動畫 */
     @keyframes popIn {
       0% { transform: scale(0.6); opacity: 0; }
       80% { transform: scale(1.1); opacity: 1; }
       100% { transform: scale(1); opacity: 1; }
     }
-    .pop-in {
-      animation: popIn 0.15s ease-out forwards;
-    }
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
-    }
+    .pop-in { animation: popIn 0.15s ease-out forwards; }
+    @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
     .blink { animation: blink 0.7s infinite; }
   </style>
 
@@ -108,11 +102,10 @@
     <div class="crt-scanlines"></div>
   </div>
 
-  <!-- HUD 狀態資訊列（100% 熱血時代劇 FC 規格） -->
+  <!-- HUD 狀態列（完全還原 FC 熱血時代劇版面） -->
   <div class="absolute top-3 left-3 right-3 flex justify-between items-start pointer-events-none z-30 text-xs">
-    <!-- 主角與夥伴狀態面板 -->
+    <!-- 主角狀態 -->
     <div class="flex flex-col gap-2">
-      <!-- 主角【くにまさ (國政)】 -->
       <div class="fc-box p-3 bg-black/95 pointer-events-auto flex flex-col gap-1 min-w-[260px]">
         <div class="flex items-center justify-between text-yellow-400 font-bold tracking-wider">
           <span class="flex items-center gap-1.5">
@@ -121,7 +114,7 @@
           </span>
           <span class="text-[10px] bg-red-700 text-white px-1 border border-white">熱血浪人</span>
         </div>
-        <!-- 體力與氣力條 -->
+        <!-- 體力條 -->
         <div class="flex items-center gap-2 mt-1">
           <span class="text-red-400 font-bold">體力</span>
           <div class="w-32 h-3.5 bg-neutral-900 border-2 border-white relative overflow-hidden">
@@ -132,17 +125,18 @@
         <!-- 文錢與手持武器 -->
         <div class="flex items-center justify-between mt-1 pt-1 border-t border-dashed border-gray-700">
           <span class="text-emerald-400 font-bold">所持金：<span id="hud-gold" class="text-yellow-300">1,500</span> 文</span>
-          <span class="text-purple-300">武器：<span id="hud-weapon" class="text-white font-bold">徒手 (可拾木刀/石頭)</span></span>
+          <span class="text-purple-300">武器：<span id="hud-weapon" class="text-white font-bold">徒手</span></span>
         </div>
       </div>
 
-      <!-- 街道惡徒通緝警報 -->
-      <div id="gang-alert" class="fc-box px-3 py-1 bg-red-950/90 text-yellow-300 text-[11px] font-bold border-red-500 hidden pointer-events-auto">
-        ⚠️ 駿河惡黨與代官手下正在街頭橫行！（已擊倒：<span id="kill-count" class="text-white">0</span> 人）
+      <!-- 街道通緝告示 -->
+      <div id="gang-alert" class="fc-box px-3 py-1 bg-red-950/90 text-yellow-300 text-[11px] font-bold border-red-500 pointer-events-auto flex items-center justify-between">
+        <span>⚔️ 駿河惡黨街頭挑釁中！</span>
+        <span>已討伐：<span id="kill-count" class="text-white">0</span> 人</span>
       </div>
     </div>
 
-    <!-- 右上角快捷功能選單 -->
+    <!-- 右上快捷按鈕 -->
     <div class="flex items-center gap-2 pointer-events-auto">
       <button id="btn-open-cart" class="fc-box p-2.5 bg-black/95 flex items-center gap-2 hover:border-yellow-400 cursor-pointer">
         <span class="text-base">🛍️</span>
@@ -159,7 +153,7 @@
     </div>
   </div>
 
-  <!-- 提示浮動框（撿拾/進店/投擲） -->
+  <!-- 調查 / 拾取提示 -->
   <div class="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-30">
     <div id="action-hint" class="fc-box px-4 py-2 bg-black/95 text-xs flex items-center gap-2 opacity-0 transition-opacity duration-150">
       <span class="px-1.5 py-0.5 bg-yellow-400 text-black font-bold text-[11px] border border-black">E</span>
@@ -167,28 +161,28 @@
     </div>
   </div>
 
-  <!-- 鍵盤出招奧義面板（支援熱血時代劇全部精髓動作） -->
+  <!-- 出招奧義面板（支援正統橫向側身戰鬥動作） -->
   <div class="hidden md:block absolute bottom-3 left-3 z-20 pointer-events-none opacity-90 text-xs text-gray-200 fc-box p-3 bg-black/95 max-w-md">
     <div class="text-yellow-400 font-bold mb-1 flex items-center justify-between">
-      <span>⚔️【熱血時代劇 經典出招表】</span>
+      <span>⚔️【熱血時代劇 經典側面出招】</span>
       <span class="text-[10px] text-gray-400">TECHNŌS 1991</span>
     </div>
     <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
       <div>前後上下走位：<span class="text-white font-bold">W A S D</span></div>
-      <div>急速衝刺：<span class="text-yellow-300 font-bold">雙擊 A/D</span> 或 <span class="text-yellow-300 font-bold">Shift</span></div>
-      <div>跳躍：<span class="text-white font-bold">Space</span>（空中可按 K 飛踢）</div>
-      <div>熱血連拳：<span class="text-white font-bold">J</span> 鍵（三連打重擊）</div>
-      <div>迴旋飛踢：<span class="text-white font-bold">K</span> 鍵（擊退敵人）</div>
+      <div>側身急速衝刺：<span class="text-yellow-300 font-bold">雙擊 A/D</span> 或 <span class="text-yellow-300 font-bold">Shift</span></div>
+      <div>跳躍：<span class="text-white font-bold">Space</span>（空中可踢）</div>
+      <div>正宗直拳：<span class="text-white font-bold">J</span> 鍵（連續出拳擊退）</div>
+      <div>側面橫飛踢：<span class="text-white font-bold">K</span> 鍵（強力擊飛）</div>
       <div>衝刺重擊：<span class="text-yellow-300 font-bold">衝刺中按 J / K</span></div>
-      <div>奧義【馬赫拳】：<span class="text-amber-400 font-bold">L</span> 鍵（高速殘像連擊）</div>
-      <div>拾取/投擲武器：<span class="text-white font-bold">E</span> 鍵（可撿木刀、石頭、木箱）</div>
+      <div>奧義【馬赫拳】：<span class="text-amber-400 font-bold">L</span> 鍵（高速側身連拳殘像）</div>
+      <div>拾取/投擲武器：<span class="text-white font-bold">E</span> 鍵（撿木刀、木箱、文錢）</div>
     </div>
     <div class="mt-1.5 text-[10px] text-emerald-400 border-t border-dashed border-gray-700 pt-1">
-      💡 敵人會源源不絕湧入！擊倒惡徒會噴出文錢，購買食補道具（越光米、煎餅）可回滿體力！
+      💡 人物全面採用正統 3/4 側面視角！走向商店按 E 購物，食補道具可即時回滿體力！
     </div>
   </div>
 
-  <!-- 虛擬按鍵（手機觸控） -->
+  <!-- 手機觸控按鍵 -->
   <div class="absolute bottom-4 left-4 z-30 flex flex-col items-center pointer-events-auto md:hidden opacity-90">
     <div class="grid grid-cols-3 gap-1 w-28 h-28">
       <div></div><button id="vkey-up" class="fc-btn text-xs font-bold py-1.5">▲</button><div></div>
@@ -214,7 +208,7 @@
     </div>
   </div>
 
-  <!-- FC 經典黑底白框對話框 -->
+  <!-- 對話框 -->
   <div id="dialog-modal" class="hidden absolute bottom-8 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl z-40">
     <div class="fc-box p-4 bg-black text-white">
       <div class="flex items-start gap-4">
@@ -276,7 +270,6 @@
 
       <div id="cart-items-list" class="flex-1 overflow-y-auto divide-y divide-gray-800 pr-1 text-xs"></div>
 
-      <!-- 時代劇密技折價券 -->
       <div class="mt-3 p-2.5 border-2 border-dashed border-yellow-500 bg-amber-950/40 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 flex-1">
           <span class="text-yellow-400 text-xs font-bold">🎟️ 密技奧義：</span>
@@ -300,7 +293,7 @@
 
   <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
 
-  <!-- 核心遊戲引擎 -->
+  <!-- 核心遊戲腳本 -->
   <script type="module">
     import * as THREE from 'three';
 
@@ -323,7 +316,6 @@
         if (this.ctx.state === 'suspended') this.ctx.resume();
       }
 
-      // 經典拳擊重擊聲「ドスッ！」(低頻方波 + 雜音短促爆裂)
       playPunchHit() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -339,7 +331,6 @@
         osc.start(now); osc.stop(now + 0.1);
       }
 
-      // 飛踢重擊「バシッ！」(中高音方波脆擊)
       playKickHit() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -355,7 +346,6 @@
         osc.start(now); osc.stop(now + 0.14);
       }
 
-      // 空揮拳腳呼呼聲「ヒュッ！」
       playSwing() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -371,7 +361,6 @@
         osc.start(now); osc.stop(now + 0.08);
       }
 
-      // 跳躍音效
       playJump() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -387,7 +376,6 @@
         osc.start(now); osc.stop(now + 0.12);
       }
 
-      // 時代劇奧義「馬赫拳」機關槍連打音效
       playMachPunch() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -403,7 +391,6 @@
         osc.start(now); osc.stop(now + 0.05);
       }
 
-      // 擊倒敵人「ピロリロリン！」
       playEnemyDown() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -420,7 +407,6 @@
         });
       }
 
-      // 撿金幣「ピロリン！」
       playCoin() {
         if (!this.sfxEnabled) return;
         this.init();
@@ -428,21 +414,19 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(987.77, now); // B5
-        osc.frequency.setValueAtTime(1318.51, now + 0.07); // E6
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.07);
         gain.gain.setValueAtTime(0.16, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
         osc.connect(gain); gain.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.28);
       }
 
-      // 1991 FC 熱血時代劇「駿河・東海道」戰鬥進行曲 BGM
       startBGM() {
         if (!this.bgmEnabled) return;
         this.init();
         if (this.bgmTimer) return;
 
-        // 經典熱血時代劇輕快戰鬥旋律（D小調都節律動）
         const melody = [
           293.66, 0, 293.66, 349.23, 440.00, 440.00, 392.00, 349.23,
           293.66, 0, 293.66, 261.63, 293.66, 349.23, 392.00, 0,
@@ -471,7 +455,6 @@
             osc.start(now); osc.stop(now + 0.13);
           }
 
-          // 三角波低音節奏
           const bassOsc = this.ctx.createOscillator();
           const bassGain = this.ctx.createGain();
           bassOsc.type = 'triangle';
@@ -516,7 +499,7 @@
     }, { once: true });
 
     /* ==========================================================================
-       2. 電商數據與遊戲狀態
+       2. 電商數據庫與玩家狀態
        ========================================================================== */
     const gameState = {
       gold: 1500,
@@ -527,7 +510,7 @@
       appliedCoupon: null,
       couponsFound: [],
       currentShopNear: null,
-      heldWeapon: null // 'bokken' / 'stone' / 'crate'
+      heldWeapon: null
     };
 
     const SHOP_DATA = {
@@ -573,7 +556,7 @@
     };
 
     /* ==========================================================================
-       3. 100% 熱血時代劇 FC 點陣精靈產生器 (Technōs 經典大頭濃眉圓眼風格)
+       3. 正宗熱血時代劇【3/4 側面視角】點陣 Sprite 生成器 (徹底告別正面傻臉)
        ========================================================================== */
     function createPixelCanvasTexture(width, height, drawCallback) {
       const cvs = document.createElement('canvas');
@@ -589,174 +572,175 @@
       return texture;
     }
 
-    // 繪製正統 FC 熱血人物 Sprite（3頭身大頭、國夫經典濃眉圓眼白眼珠、武士髻）
-    function generateTechnosCharacterSprite(role = 'kunimasa', state = 'idle', facing = 1) {
+    // 繪製正統 3/4 側面橫向橫行動作（朝右為基準，朝左以 scale.x = -1 翻轉）
+    function generateSideTechnosSprite(role = 'kunimasa', action = 'idle') {
       const W = 32;
       const H = 36;
       return createPixelCanvasTexture(W, H, (ctx) => {
         ctx.clearRect(0, 0, W, H);
 
-        // 角色配色彩盤（FC 熱血時代劇官方配色）
+        // 陣營配色
         let robeColor = '#f4f4f4';   // 國政：白和服
         let robeShadow = '#b0b0bc';
         let obiColor = '#1c1917';     // 黑腰帶
         let hairColor = '#18141f';    // 黑髮
         let ribbonColor = '#dc2626';  // 紅髮繩
 
-        if (role === 'ronin_purple') { // 駿河惡黨浪人
+        if (role === 'ronin_purple') {
           robeColor = '#7c3aed'; robeShadow = '#5b21b6'; obiColor = '#ea580c';
-        } else if (role === 'thug_cyan') { // 關東無賴
+        } else if (role === 'thug_cyan') {
           robeColor = '#0284c7'; robeShadow = '#0369a1'; obiColor = '#16a34a';
-        } else if (role === 'daikan_orange') { // 代官手下
+        } else if (role === 'daikan_orange') {
           robeColor = '#d97706'; robeShadow = '#92400e'; obiColor = '#1c1917';
-        } else if (role === 'town_girl') { // 町娘
+        } else if (role === 'town_girl') {
           robeColor = '#ec4899'; robeShadow = '#be185d'; obiColor = '#facc15'; hairColor = '#0f172a';
         }
 
         const skinColor = '#ffcca3';
         const skinShadow = '#df9b77';
 
-        // 1. 影子（地面圓形投影）
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        // 1. 影子（地面圓橢圓投影）
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
         ctx.beginPath();
-        ctx.ellipse(16, 34, 10, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(16, 34, 11, 3, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 被擊飛/打倒狀態（身體翻轉仰躺）
-        if (state === 'down') {
+        // 被擊倒躺地狀態（水平仰面橫躺於地）
+        if (action === 'down') {
           ctx.save();
-          ctx.translate(16, 26);
-          ctx.rotate(Math.PI / 2); // 90度躺下
+          ctx.translate(16, 28);
           ctx.fillStyle = robeColor;
-          ctx.fillRect(-6, -6, 12, 14);
+          ctx.fillRect(-10, -5, 20, 8); // 躺著的身體
+          ctx.fillStyle = hairColor;
+          ctx.fillRect(-14, -7, 6, 8);  // 頭髮貼地
           ctx.fillStyle = skinColor;
-          ctx.fillRect(-5, -16, 10, 9);
-          // 翻白眼 (x_x)
+          ctx.fillRect(-10, -7, 8, 8);  // 臉朝天
+          // 陣亡翻白眼 (x_x)
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-3, -14, 3, 3);
-          ctx.fillRect(1, -14, 3, 3);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(-2, -13, 1, 1);
-          ctx.fillRect(2, -13, 1, 1);
+          ctx.fillRect(-8, -6, 3, 3);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(-7, -5, 1, 1);
+          // 伸直的木屐雙腳
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(8, -4, 4, 6);
           ctx.restore();
           return;
         }
 
-        // 2. 時代劇武士頭（丁髷髮髻 Chonmage）
+        // 2. 側面頭髮與武士丁髷髮髻 (向後上方高聳與紅髮繩)
         ctx.fillStyle = hairColor;
-        ctx.fillRect(10, 3, 12, 8); // 經典國夫後梳怒髮
-        ctx.fillRect(13, 1, 6, 3);  // 沖天髮束
+        ctx.fillRect(8, 4, 12, 8);  // 後腦勺怒髮
+        ctx.fillRect(16, 3, 5, 4);  // 側額頭瀏海
+        ctx.fillRect(6, 1, 6, 4);   // 沖天後梳髮束
         if (role !== 'town_girl') {
           ctx.fillStyle = ribbonColor;
-          ctx.fillRect(14, 2, 4, 2); // 綁髮紅繩
+          ctx.fillRect(9, 2, 3, 3); // 經典紅綁繩
         } else {
-          // 町娘髮髻與髮簪
           ctx.fillStyle = '#f43f5e';
-          ctx.fillRect(20, 3, 3, 3);
+          ctx.fillRect(7, 3, 4, 3); // 町娘簪花
         }
 
-        // 3. 臉部（FC 經典 Technōs 標誌性大白眼珠與超濃黑眉）
+        // 3. 側面五官（經典 Technōs 3/4 側面剛毅臉龐）
         ctx.fillStyle = skinColor;
-        ctx.fillRect(10, 9, 12, 9);
+        ctx.fillRect(11, 8, 11, 10); // 側面臉頰與下巴
+        ctx.fillRect(21, 12, 2, 3);  // 側臉鼻樑突起
 
-        // 眉毛與眼睛
-        if (state === 'hurt') {
-          // 被打中時經典白眼爆開、大張嘴
+        if (action === 'hurt') {
+          // 被打中時頭部後仰，眼球爆凸
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(11, 10, 4, 4);
-          ctx.fillRect(17, 10, 4, 4);
+          ctx.fillRect(15, 8, 5, 5); // 凸出的大白眼
           ctx.fillStyle = '#000000';
-          ctx.fillRect(12, 11, 2, 2);
-          ctx.fillRect(18, 11, 2, 2);
-          // 嘴巴大開慘叫
+          ctx.fillRect(18, 10, 2, 2);
           ctx.fillStyle = '#991b1b';
-          ctx.fillRect(14, 15, 4, 3);
+          ctx.fillRect(18, 14, 4, 4); // 側張慘叫嘴
         } else {
-          // 正常威嚴濃眉
+          // 正常側面濃眉大眼
           ctx.fillStyle = '#000000';
-          ctx.fillRect(11, 10, 4, 2); // 左濃眉
-          ctx.fillRect(17, 10, 4, 2); // 右濃眉
-          // 大圓眼
+          ctx.fillRect(14, 9, 7, 2);  // 粗黑側眉毛（斜挑入鬢）
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(12, 12, 3, 3);
-          ctx.fillRect(17, 12, 3, 3);
+          ctx.fillRect(15, 11, 4, 4); // 炯炯有神大白眼
           ctx.fillStyle = '#000000';
-          ctx.fillRect(13, 13, 2, 2); // 瞳孔
-          ctx.fillRect(18, 13, 2, 2);
-          // 抿嘴 / 咬牙
-          ctx.fillRect(14, 16, 4, 1);
+          ctx.fillRect(17, 12, 2, 2); // 黑眼珠向右前方逼視
+          // 側面嘴巴線
+          ctx.fillStyle = '#831843';
+          ctx.fillRect(17, 16, 4, 1);
         }
 
-        // 4. 和服上身 (Kimono)
+        // 4. 側面和服身軀與側襟
         ctx.fillStyle = robeColor;
-        ctx.fillRect(8, 18, 16, 10);
-        // 和服交領 (V 領開襟露胸膛)
+        ctx.fillRect(9, 18, 12, 10);
+        // 和服交疊前襟
         ctx.fillStyle = skinColor;
-        ctx.beginPath();
-        ctx.moveTo(13, 18); ctx.lineTo(19, 18); ctx.lineTo(16, 22);
-        ctx.fill();
+        ctx.fillRect(18, 18, 3, 4);
         ctx.fillStyle = robeShadow;
-        ctx.fillRect(8, 25, 16, 3);
+        ctx.fillRect(9, 25, 12, 3);
 
-        // 腰帶 (Obi)
+        // 黑色腰帶 (Obi)
         ctx.fillStyle = obiColor;
-        ctx.fillRect(9, 23, 14, 3);
+        ctx.fillRect(10, 23, 11, 3);
+        ctx.fillRect(8, 24, 2, 4); // 腰帶側飄帶結
 
-        // 5. 手臂出招動作
+        // 5. 側面手臂動作 (Punch / Kick / Mach / Walk / Idle)
         ctx.fillStyle = robeColor;
-        if (state === 'punch') {
-          // 直拳向前突刺
-          ctx.fillRect(20, 19, 8, 4);
+        if (action === 'punch') {
+          // 正宗直拳：側身重心前傾，右拳向右突刺！
+          ctx.fillRect(18, 18, 9, 5);
           ctx.fillStyle = skinColor;
-          ctx.fillRect(27, 18, 4, 5); // 鐵拳
+          ctx.fillRect(26, 17, 5, 6); // 突出的碩大鐵拳！
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(30, 19, 2, 3); // 拳風
-        } else if (state === 'mach') {
-          // 奧義馬赫拳：三道急速白色殘影拳風
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-          ctx.fillRect(19, 16, 8, 3);
-          ctx.fillRect(22, 20, 10, 4);
-          ctx.fillRect(19, 24, 8, 3);
+          ctx.fillRect(30, 18, 2, 4); // 拳端白刃爆裂風
+          // 左手側縮於腰側蓄力
+          ctx.fillStyle = robeShadow;
+          ctx.fillRect(7, 19, 4, 4);
+        } else if (action === 'mach') {
+          // 奧義馬赫拳：三道急速連續向前直轟之拳風殘影！
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.fillRect(20, 15, 8, 3);
+          ctx.fillRect(23, 19, 9, 4);
+          ctx.fillRect(19, 23, 8, 3);
           ctx.fillStyle = skinColor;
-          ctx.fillRect(30, 20, 2, 4);
-        } else if (state === 'kick') {
-          ctx.fillRect(6, 19, 4, 6);
+          ctx.fillRect(30, 18, 2, 5);
+        } else if (action === 'kick') {
+          // 側面橫身飛踢：左臂後擺維持平衡
+          ctx.fillRect(6, 19, 5, 5);
         } else {
-          // 擺手
-          ctx.fillRect(6, 18, 4, 6);
-          ctx.fillRect(22, 18, 4, 6);
+          // 待機/行走正常側臂擺動
+          ctx.fillRect(15, 19, 4, 7);
+          ctx.fillStyle = skinColor;
+          ctx.fillRect(15, 25, 3, 3);
         }
 
-        // 6. 雙腿與木屐 (Geta)
+        // 6. 側面雙腿與木屐步姿（前後側跨步）
         ctx.fillStyle = skinColor;
-        if (state === 'kick') {
-          // 經典橫空飛踢腿！
-          ctx.fillRect(10, 27, 4, 6);
+        if (action === 'kick') {
+          // 經典橫空飛踢：右腿筆直橫踹而出！
+          ctx.fillRect(8, 27, 4, 6); // 支撐腿
           ctx.fillStyle = '#78350f';
-          ctx.fillRect(9, 32, 5, 3); // 支撐腳
-          // 橫向踢出的腿
+          ctx.fillRect(7, 32, 5, 3); // 支撐木屐
+          // 踢出的橫向長腿
           ctx.fillStyle = skinColor;
-          ctx.fillRect(16, 24, 12, 4);
+          ctx.fillRect(14, 23, 13, 5);
           ctx.fillStyle = '#78350f';
-          ctx.fillRect(27, 23, 4, 6); // 飛踢木屐
-        } else if (state === 'walk') {
-          ctx.fillRect(9, 27, 4, 6);
-          ctx.fillRect(17, 26, 4, 7);
+          ctx.fillRect(26, 22, 5, 7); // 迎面踹下的巨大木屐底！
+        } else if (action === 'walk') {
+          // 邁開步伐走動
+          ctx.fillRect(8, 27, 4, 6);
+          ctx.fillRect(16, 26, 4, 7);
           ctx.fillStyle = '#78350f';
-          ctx.fillRect(8, 32, 5, 3);
-          ctx.fillRect(17, 32, 5, 3);
+          ctx.fillRect(7, 32, 5, 3);
+          ctx.fillRect(16, 32, 5, 3);
         } else {
-          // 站立待機
+          // 側立待機雙腿
           ctx.fillRect(10, 27, 4, 6);
-          ctx.fillRect(16, 27, 4, 6);
+          ctx.fillRect(15, 27, 4, 6);
           ctx.fillStyle = '#78350f';
           ctx.fillRect(9, 32, 5, 3);
-          ctx.fillRect(16, 32, 5, 3);
+          ctx.fillRect(15, 32, 5, 3);
         }
       });
     }
 
-    // 掉落文錢 (寬永通寶)
+    // 掉落物
     const coinTexture = createPixelCanvasTexture(16, 16, (ctx) => {
       ctx.fillStyle = '#ca8a04';
       ctx.beginPath(); ctx.arc(8, 8, 7, 0, Math.PI * 2); ctx.fill();
@@ -766,18 +750,15 @@
       ctx.fillRect(6, 6, 4, 4); // 方孔
     });
 
-    // 掉落武器：木刀
     const bokkenTexture = createPixelCanvasTexture(24, 24, (ctx) => {
       ctx.fillStyle = '#92400e';
       ctx.beginPath();
       ctx.moveTo(3, 21); ctx.lineTo(21, 3); ctx.lineTo(23, 4); ctx.lineTo(4, 23);
       ctx.fill();
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(3, 19, 3, 3);
-      ctx.fillRect(5, 17, 3, 3);
+      ctx.fillRect(3, 19, 3, 3); ctx.fillRect(5, 17, 3, 3);
     });
 
-    // 掉落木箱
     const crateTexture = createPixelCanvasTexture(24, 24, (ctx) => {
       ctx.fillStyle = '#b45309'; ctx.fillRect(0, 0, 24, 24);
       ctx.fillStyle = '#78350f'; ctx.strokeRect(1, 1, 22, 22);
@@ -787,7 +768,7 @@
     });
 
     /* ==========================================================================
-       4. Three.js 2.5D 江戶街景與舞台視角 (駿河灣・富士山・町屋)
+       4. Three.js 2.5D 江戶街景搭建 (駿河灣・富士山・町屋)
        ========================================================================== */
     const canvas = document.getElementById('game-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
@@ -802,7 +783,6 @@
     scene.background = new THREE.Color('#161026');
     scene.fog = new THREE.Fog('#161026', 25, 65);
 
-    // 2.5D 熱血視角：固定俯瞰斜角，支援上下深度走位
     const camera = new THREE.PerspectiveCamera(36, INTERNAL_WIDTH / INTERNAL_HEIGHT, 0.1, 100);
     const CAMERA_OFFSET_Y = 4.8;
     const CAMERA_OFFSET_Z = 10.5;
@@ -816,7 +796,7 @@
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    // 遠景：駿河晚霞夕照與積雪富士山
+    // 遠景富士山板
     const fujiTexture = createPixelCanvasTexture(128, 64, (ctx) => {
       const grad = ctx.createLinearGradient(0, 0, 0, 64);
       grad.addColorStop(0, '#1c113b');
@@ -825,12 +805,11 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 64);
 
-      // 富士山
       ctx.fillStyle = '#261b54';
       ctx.beginPath();
       ctx.moveTo(28, 64); ctx.lineTo(64, 18); ctx.lineTo(76, 18); ctx.lineTo(112, 64);
       ctx.fill();
-      // 雪冠
+
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.moveTo(64, 18); ctx.lineTo(76, 18); ctx.lineTo(82, 28); ctx.lineTo(74, 25);
@@ -842,7 +821,7 @@
     fujiPlane.position.set(0, 8.5, -13);
     scene.add(fujiPlane);
 
-    // 街道地面（2.5D 石板路，Z 軸深度 -2.4 ~ 2.4 可自由上下跑位）
+    // 街道地面
     const streetTex = createPixelCanvasTexture(64, 64, (ctx) => {
       ctx.fillStyle = '#3a3330';
       ctx.fillRect(0, 0, 64, 64);
@@ -864,7 +843,7 @@
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // 江戶町屋店鋪（越後屋、鍛冶屋、茶房）
+    // 町屋建築
     const machiyaWallTex = createPixelCanvasTexture(32, 32, (ctx) => {
       ctx.fillStyle = '#2c1e17'; ctx.fillRect(0, 0, 32, 32);
       ctx.fillStyle = '#1c130e';
@@ -918,16 +897,16 @@
     buildMachiyaShop(10, 'tea', '茶', '#166534');
 
     /* ==========================================================================
-       5. 玩家角色【國政】與動作系統 (Dash 衝刺、連拳、飛踢、馬赫拳)
+       5. 玩家角色【國政】與側面動作字典 (徹底支援左右轉向、直拳、飛踢、馬赫拳)
        ========================================================================== */
     const playerSprites = {
-      idle: generateTechnosCharacterSprite('kunimasa', 'idle'),
-      walk: generateTechnosCharacterSprite('kunimasa', 'walk'),
-      punch: generateTechnosCharacterSprite('kunimasa', 'punch'),
-      kick: generateTechnosCharacterSprite('kunimasa', 'kick'),
-      mach: generateTechnosCharacterSprite('kunimasa', 'mach'),
-      hurt: generateTechnosCharacterSprite('kunimasa', 'hurt'),
-      down: generateTechnosCharacterSprite('kunimasa', 'down')
+      idle: generateSideTechnosSprite('kunimasa', 'idle'),
+      walk: generateSideTechnosSprite('kunimasa', 'walk'),
+      punch: generateSideTechnosSprite('kunimasa', 'punch'),
+      kick: generateSideTechnosSprite('kunimasa', 'kick'),
+      mach: generateSideTechnosSprite('kunimasa', 'mach'),
+      hurt: generateSideTechnosSprite('kunimasa', 'hurt'),
+      down: generateSideTechnosSprite('kunimasa', 'down')
     };
 
     const playerMat = new THREE.MeshBasicMaterial({ map: playerSprites.idle, transparent: true, side: THREE.DoubleSide });
@@ -943,14 +922,12 @@
       isGrounded: true,
       isDashing: false,
       dashTimer: 0,
-      facing: 1,
+      facing: 1, // 1: 側面朝右, -1: 側面朝左
       state: 'idle',
-      stateTimer: 0,
-      comboStep: 0,
-      comboTimer: 0
+      stateTimer: 0
     };
 
-    // 掉落物與木箱
+    // 掉落物
     const droppedItems = [];
     function spawnDroppedItem(type, x, z) {
       const tex = (type === 'coin') ? coinTexture : (type === 'bokken' ? bokkenTexture : crateTexture);
@@ -997,49 +974,47 @@
     }
 
     /* ==========================================================================
-       6. 動態敵人群與街頭 NPC 系統（敵人源源不絕浪人混戰）
+       6. 側面敵人浪人與街頭 NPC 系統（互相側身對峙）
        ========================================================================== */
     const enemySpritesCache = {
       ronin_purple: {
-        idle: generateTechnosCharacterSprite('ronin_purple', 'idle'),
-        walk: generateTechnosCharacterSprite('ronin_purple', 'walk'),
-        punch: generateTechnosCharacterSprite('ronin_purple', 'punch'),
-        hurt: generateTechnosCharacterSprite('ronin_purple', 'hurt'),
-        down: generateTechnosCharacterSprite('ronin_purple', 'down')
+        idle: generateSideTechnosSprite('ronin_purple', 'idle'),
+        walk: generateSideTechnosSprite('ronin_purple', 'walk'),
+        punch: generateSideTechnosSprite('ronin_purple', 'punch'),
+        hurt: generateSideTechnosSprite('ronin_purple', 'hurt'),
+        down: generateSideTechnosSprite('ronin_purple', 'down')
       },
       thug_cyan: {
-        idle: generateTechnosCharacterSprite('thug_cyan', 'idle'),
-        walk: generateTechnosCharacterSprite('thug_cyan', 'walk'),
-        punch: generateTechnosCharacterSprite('thug_cyan', 'punch'),
-        hurt: generateTechnosCharacterSprite('thug_cyan', 'hurt'),
-        down: generateTechnosCharacterSprite('thug_cyan', 'down')
+        idle: generateSideTechnosSprite('thug_cyan', 'idle'),
+        walk: generateSideTechnosSprite('thug_cyan', 'walk'),
+        punch: generateSideTechnosSprite('thug_cyan', 'punch'),
+        hurt: generateSideTechnosSprite('thug_cyan', 'hurt'),
+        down: generateSideTechnosSprite('thug_cyan', 'down')
       },
       daikan_orange: {
-        idle: generateTechnosCharacterSprite('daikan_orange', 'idle'),
-        walk: generateTechnosCharacterSprite('daikan_orange', 'walk'),
-        punch: generateTechnosCharacterSprite('daikan_orange', 'punch'),
-        hurt: generateTechnosCharacterSprite('daikan_orange', 'hurt'),
-        down: generateTechnosCharacterSprite('daikan_orange', 'down')
+        idle: generateSideTechnosSprite('daikan_orange', 'idle'),
+        walk: generateSideTechnosSprite('daikan_orange', 'walk'),
+        punch: generateSideTechnosSprite('daikan_orange', 'punch'),
+        hurt: generateSideTechnosSprite('daikan_orange', 'hurt'),
+        down: generateSideTechnosSprite('daikan_orange', 'down')
       }
     };
 
     const civilianSprites = {
-      idle: generateTechnosCharacterSprite('town_girl', 'idle'),
-      walk: generateTechnosCharacterSprite('town_girl', 'walk'),
-      hurt: generateTechnosCharacterSprite('town_girl', 'hurt')
+      idle: generateSideTechnosSprite('town_girl', 'idle'),
+      walk: generateSideTechnosSprite('town_girl', 'walk'),
+      hurt: generateSideTechnosSprite('town_girl', 'hurt')
     };
 
     const activeEnemies = [];
     const activeCivilians = [];
 
-    // 敵人陣營名稱與台詞
     const GANG_CONFIGS = [
       { role: 'ronin_purple', name: '駿河惡黨 浪人', hp: 50, shout: 'てめえ！覚悟！(納命來！)' },
       { role: 'thug_cyan', name: '關東無賴 混混', hp: 40, shout: 'なめんなよ！(休得猖狂！)' },
       { role: 'daikan_orange', name: '惡代官 保鑣', hp: 65, shout: 'ぶっ殺してやる！(斬了你！)' }
     ];
 
-    // 動態生成敵人
     function spawnWaveEnemy(x, z) {
       const cfg = GANG_CONFIGS[Math.floor(Math.random() * GANG_CONFIGS.length)];
       const sprites = enemySpritesCache[cfg.role];
@@ -1056,7 +1031,7 @@
         vx: 0, vy: 0,
         hp: cfg.hp,
         maxHp: cfg.hp,
-        facing: -1,
+        facing: -1, // 預設面向左側
         state: 'walk',
         stateTimer: 0,
         attackCooldown: Math.floor(Math.random() * 40 + 20),
@@ -1067,15 +1042,13 @@
       showSpeechBubble(enemy, cfg.shout);
     }
 
-    // 初始化街道敵人（保持街頭熱鬧亂鬥感）
+    // 初始化 5~6 名在場惡徒
     for (let i = 0; i < 5; i++) {
       const spawnX = -8 + i * 4.5 + (Math.random() - 0.5) * 2;
       const spawnZ = (Math.random() - 0.5) * 4;
       spawnWaveEnemy(spawnX, spawnZ);
     }
-    document.getElementById('gang-alert').classList.remove('hidden');
 
-    // 街道和平 NPC（町娘）
     function spawnTownGirl(x, z) {
       const mat = new THREE.MeshBasicMaterial({ map: civilianSprites.idle, transparent: true, side: THREE.DoubleSide });
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.8), mat);
@@ -1086,7 +1059,6 @@
     spawnTownGirl(-3, 1.2);
     spawnTownGirl(7, -1.2);
 
-    // 經典時代劇對話氣泡 Speech Bubble
     function showSpeechBubble(targetObj, text) {
       const bubble = document.createElement('div');
       bubble.className = 'fixed font-nes text-[10px] bg-black text-yellow-300 border-2 border-white px-2 py-1 pointer-events-none z-40 pop-in shadow-md';
@@ -1108,7 +1080,6 @@
       }, 1400);
     }
 
-    // 打擊傷害飄字 Damage Float
     function showDamageFloat(val, x, y, z, color = 'text-yellow-400') {
       const div = document.createElement('div');
       div.className = `fixed font-nes ${color} font-bold text-xs pointer-events-none z-50 pop-in`;
@@ -1134,9 +1105,9 @@
     }
 
     /* ==========================================================================
-       7. 出招格鬥與打擊判定引擎 (Combo 連拳、馬赫拳、飛踢、衝刺重擊)
+       7. 側面出招與打擊判定引擎 (直拳、飛踢、奧義馬赫拳)
        ========================================================================== */
-    const keys = { up: false, down: false, left: false, right: false, dash: false };
+    const keys = { up: false, down: false, left: false, right: false };
     let lastKeyTime = { left: 0, right: 0 };
 
     window.addEventListener('keydown', (e) => {
@@ -1146,14 +1117,16 @@
         case 'KeyW': case 'ArrowUp': keys.up = true; break;
         case 'KeyS': case 'ArrowDown': keys.down = true; break;
         case 'KeyA': case 'ArrowLeft':
-          if (now - lastKeyTime.left < 280) playerObj.isDashing = true; // 雙擊衝刺
+          if (now - lastKeyTime.left < 280) playerObj.isDashing = true;
           lastKeyTime.left = now;
           keys.left = true;
+          playerObj.facing = -1; // 側身朝左
           break;
         case 'KeyD': case 'ArrowRight':
-          if (now - lastKeyTime.right < 280) playerObj.isDashing = true; // 雙擊衝刺
+          if (now - lastKeyTime.right < 280) playerObj.isDashing = true;
           lastKeyTime.right = now;
           keys.right = true;
+          playerObj.facing = 1;  // 側身朝右
           break;
         case 'ShiftLeft': case 'ShiftRight':
           playerObj.isDashing = true;
@@ -1177,7 +1150,6 @@
       }
     });
 
-    // 觸控按鈕綁定
     const bindTouch = (id, k) => {
       const el = document.getElementById(id);
       el.addEventListener('pointerdown', (e) => { e.preventDefault(); keys[k] = true; });
@@ -1203,14 +1175,13 @@
       }
     }
 
-    // 拳擊 / 組合連拳 (J)
+    // 揮拳 (J)
     function triggerPunch() {
       if (playerObj.stateTimer > 0) return;
       playerObj.state = 'punch';
       playerObj.stateTimer = 9;
       playerMesh.material.map = playerSprites.punch;
 
-      // 衝刺時打出衝刺重拳！
       const isDashAttack = playerObj.isDashing;
       const dmg = isDashAttack ? 28 : (gameState.heldWeapon === 'bokken' ? 30 : 16);
 
@@ -1218,7 +1189,7 @@
       executeHit(dmg, isDashAttack ? 1.8 : 1.4, isDashAttack ? 0.7 : 0.4);
     }
 
-    // 飛踢 / 旋風腿 (K)
+    // 側面橫踢 (K)
     function triggerKick() {
       if (playerObj.stateTimer > 0) return;
       playerObj.state = 'kick';
@@ -1232,7 +1203,7 @@
       executeHit(dmg, isDashKick ? 1.9 : 1.5, isDashKick ? 0.9 : 0.5);
     }
 
-    // 奧義【馬赫拳】(L) - 連續方波殘像四連打！
+    // 奧義馬赫拳 (L)
     function triggerMachPunch() {
       if (playerObj.stateTimer > 0) return;
       playerObj.state = 'mach';
@@ -1248,9 +1219,7 @@
       }, 75);
     }
 
-    // 打擊判定
     function executeHit(dmg, range, knockback) {
-      // 1. 木箱判定
       crates.forEach(c => {
         if (!c.alive) return;
         const dx = (playerObj.x - c.x) * playerObj.facing;
@@ -1260,26 +1229,21 @@
         }
       });
 
-      // 2. 敵人判定
-      let hitAny = false;
       activeEnemies.forEach(en => {
         if (!en.alive || en.state === 'down') return;
         const dx = (playerObj.x - en.x) * playerObj.facing;
         const dz = Math.abs(playerObj.z - en.z);
 
         if (dx < 0 && dx > -range && dz < 0.9) {
-          hitAny = true;
           audio.playPunchHit();
           en.hp -= dmg;
           en.x += playerObj.facing * knockback;
           showDamageFloat(dmg, en.x, en.y + 1, en.z);
 
-          // 被打中顏面失真表情
           en.state = 'hurt';
           en.stateTimer = 10;
           en.mesh.material.map = en.sprites.hurt;
 
-          // 敵人陣亡
           if (en.hp <= 0) {
             en.alive = false;
             en.state = 'down';
@@ -1290,17 +1254,14 @@
             gameState.kills++;
             document.getElementById('kill-count').innerText = gameState.kills;
 
-            // 掉落文錢
             spawnDroppedItem('coin', en.x, en.z);
             showToast(`💥 擊倒【${en.cfg.name}】！掉落文錢！`);
 
-            // 1.5 秒後閃爍消散
             setTimeout(() => {
               scene.remove(en.mesh);
               const idx = activeEnemies.indexOf(en);
               if (idx > -1) activeEnemies.splice(idx, 1);
 
-              // 補足敵人人數（隨機從畫面兩側衝出新敵人！）
               setTimeout(() => {
                 const side = Math.random() > 0.5 ? 1 : -1;
                 const newX = camera.position.x + side * 16;
@@ -1313,7 +1274,6 @@
       });
     }
 
-    // E 鍵拾取、丟擲、調查
     function triggerInteractOrPickup() {
       const dialogModal = document.getElementById('dialog-modal');
       if (!dialogModal.classList.contains('hidden')) {
@@ -1321,7 +1281,6 @@
         return;
       }
 
-      // 拾取地上文錢或武器
       for (let i = droppedItems.length - 1; i >= 0; i--) {
         const itm = droppedItems[i];
         if (!itm.alive) continue;
@@ -1345,7 +1304,6 @@
         }
       }
 
-      // 投擲手中武器
       if (gameState.heldWeapon) {
         showToast('拋擲手中武器！');
         audio.playSwing();
@@ -1355,7 +1313,6 @@
         return;
       }
 
-      // 調查進店
       if (gameState.currentShopNear) {
         audio.playPunchHit();
         openDialog(gameState.currentShopNear.data);
@@ -1363,7 +1320,7 @@
     }
 
     /* ==========================================================================
-       8. UI 控制與真實電商購物車管理
+       8. UI 控制與購物車
        ========================================================================== */
     function updateHUD() {
       document.getElementById('hud-gold').innerText = gameState.gold.toLocaleString();
@@ -1544,7 +1501,7 @@
     }
 
     /* ==========================================================================
-       9. 2.5D 主循環引擎 (Physics, Sprite Animation, AI Waves)
+       9. 2.5D 主循環引擎 (側面朝向判定、AI 對峙朝向)
        ========================================================================== */
     const BASE_SPEED = 0.085;
     let walkTicker = 0;
@@ -1552,7 +1509,6 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // 移動與衝刺計算
       let mx = 0;
       let mz = 0;
       if (keys.left) { mx -= 1; playerObj.facing = -1; }
@@ -1586,7 +1542,6 @@
         playerObj.z = THREE.MathUtils.clamp(playerObj.z, -2.4, 2.3);
       }
 
-      // 跳躍重力物理
       if (!playerObj.isGrounded) {
         playerObj.y += playerObj.vy;
         playerObj.vy -= 0.015;
@@ -1597,14 +1552,14 @@
         }
       }
 
+      // 主角側面翻轉（facing: 1 為朝右，-1 為朝左，永遠保持側身站姿！）
       playerMesh.scale.x = playerObj.facing;
       playerMesh.position.set(playerObj.x, 0.95 + playerObj.y, playerObj.z);
 
-      // 相機 2.5D 平滑跟隨與遠景視差
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerObj.x, 0.09);
       fujiPlane.position.x = camera.position.x * 0.85;
 
-      // 敵人群 AI 行為邏輯
+      // 敵人 AI：永遠面對主角側身逼近！
       activeEnemies.forEach(en => {
         if (!en.alive) return;
         if (en.stateTimer > 0) {
@@ -1615,18 +1570,19 @@
           }
         }
 
-        const dist = Math.hypot(playerObj.x - en.x, playerObj.z - en.z);
+        const dx = playerObj.x - en.x;
+        const dz = playerObj.z - en.z;
+        const dist = Math.hypot(dx, dz);
+
+        // 面對主角（若主角在右側則面向右側，主角在左側則面向左側）
+        en.facing = Math.sign(dx) || -1;
+        en.mesh.scale.x = en.facing;
+
         if (dist < 6.0 && dist > 1.2) {
-          // 主動逼近主角
-          const dx = playerObj.x - en.x;
-          const dz = playerObj.z - en.z;
           en.x += Math.sign(dx) * 0.035;
           en.z += Math.sign(dz) * 0.02;
-          en.facing = Math.sign(dx) || -1;
-          en.mesh.scale.x = en.facing;
           if (en.state !== 'hurt') en.mesh.material.map = en.sprites.walk;
         } else if (dist <= 1.2 && en.state !== 'hurt') {
-          // 貼身發動攻擊
           en.attackCooldown--;
           if (en.attackCooldown <= 0) {
             en.attackCooldown = Math.floor(Math.random() * 50 + 35);
@@ -1637,17 +1593,17 @@
             gameState.hp = Math.max(0, gameState.hp - 12);
             updateHUD();
             showDamageFloat(12, playerObj.x, playerObj.y, playerObj.z, 'text-red-500');
-            showToast(`遭【${en.cfg.name}】重擊！體力 -12！`);
+            showToast(`遭【${en.cfg.name}】直拳重擊！體力 -12！`);
           }
         }
         en.mesh.position.set(en.x, 0.95, en.z);
       });
 
-      // 町娘路人避難邏輯
+      // 町娘避難
       activeCivilians.forEach(civ => {
         const nearEnemyOrPlayer = activeEnemies.some(en => Math.hypot(civ.x - en.x, civ.z - en.z) < 2.5);
         if (nearEnemyOrPlayer) {
-          civ.x += civ.facing * 0.04; // 慌張逃跑
+          civ.x += civ.facing * 0.04;
           civ.mesh.material.map = civilianSprites.hurt;
         } else {
           civ.x += civ.facing * civ.speed;
@@ -1658,7 +1614,7 @@
         civ.mesh.position.set(civ.x, 0.9, civ.z);
       });
 
-      // 掉落物小物理彈跳
+      // 掉落物小跳躍
       droppedItems.forEach(itm => {
         if (!itm.alive) return;
         if (itm.y > 0.35) {
@@ -1669,7 +1625,6 @@
         itm.mesh.position.set(itm.x, itm.y, itm.z);
       });
 
-      // 木屑碎片物理飛散
       for (let i = debrisList.length - 1; i >= 0; i--) {
         const d = debrisList[i];
         d.mesh.position.x += d.vx;
@@ -1683,7 +1638,6 @@
         }
       }
 
-      // 檢查進店互動
       let nearShop = null;
       shopsInScene.forEach(shop => {
         const dist = Math.hypot(playerObj.x - shop.position.x, playerObj.z - shop.position.z);
